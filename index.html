@@ -106,7 +106,7 @@ const PAL={
 };
 
 // --- STATE ---
-let state='menu',frame=0,shake=0,flashTimer=0;
+let state='menu',frame=0,shake=0,flashTimer=0,currentLevel=1,maxLevels=3;
 let playerWeapon='lance';
 let score=0,lives=3,armorOn=true;
 let platforms,enemies,projectiles,particles,pickups,chests,decorations,signs;
@@ -154,6 +154,132 @@ document.querySelectorAll('[data-key]').forEach(btn=>{
   btn.addEventListener('mousedown',on);btn.addEventListener('mouseup',off);btn.addEventListener('mouseleave',off);
 });
 C.addEventListener('click',()=>initAudio());
+
+
+// TECLADO VIRTUAL PARA MÓVILES
+const virtualKeyboard = document.getElementById('virtualKeyboard');
+
+function showVirtualKeyboard(){
+  if(virtualKeyboard) virtualKeyboard.style.display = 'block';
+}
+
+function hideVirtualKeyboard(){
+  if(virtualKeyboard) virtualKeyboard.style.display = 'none';
+}
+
+// Event listeners para botones del teclado virtual
+document.querySelectorAll('.vk-btn').forEach(btn=>{
+  btn.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    if(!mathQuiz.active) return;
+
+    const num = btn.dataset.num;
+    const action = btn.dataset.action;
+
+    if(num !== undefined){
+      // Número presionado
+      if(mathQuiz.input.length < 3){
+        mathQuiz.input += num;
+      }
+    }else if(action === 'backspace'){
+      mathQuiz.input = mathQuiz.input.slice(0, -1);
+    }else if(action === 'clear'){
+      mathQuiz.input = '';
+    }else if(action === 'check'){
+      if(mathQuiz.input.length > 0){
+        checkMathAnswer();
+      }
+    }
+  });
+
+  btn.addEventListener('click', e=>{
+    e.preventDefault();
+    e.stopPropagation();
+    if(!mathQuiz.active) return;
+
+    const num = btn.dataset.num;
+    const action = btn.dataset.action;
+
+    if(num !== undefined){
+      if(mathQuiz.input.length < 3){
+        mathQuiz.input += num;
+      }
+    }else if(action === 'backspace'){
+      mathQuiz.input = mathQuiz.input.slice(0, -1);
+    }else if(action === 'clear'){
+      mathQuiz.input = '';
+    }else if(action === 'check'){
+      if(mathQuiz.input.length > 0){
+        checkMathAnswer();
+      }
+    }
+  });
+});
+
+// Mostrar/ocultar teclado virtual según el estado del quiz
+const originalStartMathQuiz = startMathQuiz;
+startMathQuiz = function(chest){
+  originalStartMathQuiz(chest);
+  showVirtualKeyboard();
+};
+
+const originalCheckMathAnswer = checkMathAnswer;
+checkMathAnswer = function(){
+  originalCheckMathAnswer();
+  // No ocultar inmediatamente, esperar a que se vea el resultado
+  setTimeout(()=>{
+    if(!mathQuiz.active) hideVirtualKeyboard();
+  }, 2000);
+};
+
+// También ocultar cuando se presiona Escape
+const originalUpdateMathQuiz = updateMathQuiz;
+updateMathQuiz = function(){
+  originalUpdateMathQuiz();
+  if(keys['Escape']){
+    hideVirtualKeyboard();
+  }
+};
+
+// INPUT NATIVO PARA MÓVILES (alternativa al teclado virtual)
+// Crear un input oculto que capture el teclado nativo
+const hiddenInput = document.createElement('input');
+hiddenInput.type = 'number';
+hiddenInput.style.position = 'absolute';
+hiddenInput.style.opacity = '0';
+hiddenInput.style.pointerEvents = 'none';
+hiddenInput.style.left = '-1000px';
+document.body.appendChild(hiddenInput);
+
+// Al activar el quiz, enfocar el input oculto para mostrar teclado nativo
+const originalStartMathQuizNative = startMathQuiz;
+startMathQuiz = function(chest){
+  originalStartMathQuizNative(chest);
+  // Intentar mostrar teclado nativo en móviles
+  if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
+    hiddenInput.value = '';
+    hiddenInput.focus();
+    showVirtualKeyboard(); // Mostrar ambos por si acaso
+  }
+};
+
+// Sincronizar input oculto con mathQuiz
+hiddenInput.addEventListener('input', e=>{
+  if(mathQuiz.active){
+    const val = hiddenInput.value.replace(/[^0-9]/g, '');
+    if(val.length <= 3){
+      mathQuiz.input = val;
+    }
+  }
+});
+
+hiddenInput.addEventListener('keydown', e=>{
+  if(e.key === 'Enter' && mathQuiz.active && mathQuiz.input.length > 0){
+    checkMathAnswer();
+    hiddenInput.blur();
+  }
+});
 
 // Event listeners para botón Comprobar del quiz matemático
 C.addEventListener('mousedown',e=>{
@@ -767,64 +893,118 @@ function drawMathQuiz(){
   $.textAlign='left';
 }
 
+
+function startNextLevel(){
+  // Transición de nivel
+  flashTimer=30; // Flash blanco
+
+  // Resetear posición del jugador
+  P.x=40;P.y=GROUND_Y-40;P.vx=0;P.vy=0;P.dir=1;
+
+  // Regenerar nivel con nueva configuración
+  genLevel();
+
+  // Mensaje de nivel
+  showLevelMessage();
+}
+
+function showLevelMessage(){
+  const messages={
+    1:'NIVEL 1: LA VEGA DE GRANADA',
+    2:'NIVEL 2: CAMINO A SANTA FE', 
+    3:'NIVEL 3: EL CASTILLO REAL'
+  };
+  const msg=messages[currentLevel]||'NIVEL '+currentLevel;
+  // El mensaje se mostrará en el HUD durante unos segundos
+  levelMessageTimer=180; // 3 segundos a 60fps
+  currentLevelName=msg;
+}
+
+let levelMessageTimer=0;
+let currentLevelName='NIVEL 1: LA VEGA DE GRANADA';
+
 // --- LEVEL ---
 function genLevel(){
   platforms=[];enemies=[];projectiles=[];particles=[];pickups=[];chests=[];decorations=[];signs=[];
 
-  const gs=[{x:0,w:550},{x:590,w:450},{x:1090,w:400},{x:1550,w:500},{x:2110,w:350},
-    {x:2520,w:400},{x:2980,w:500},{x:3540,w:400},{x:4000,w:800}];
-  for(const s of gs)platforms.push({x:s.x,y:GROUND_Y,w:s.w,h:60,type:'ground'});
+  // Configuración según el nivel
+  const levelConfig={
+    1:{ // NIVEL 1: VEGA DE GRANADA
+      groundColor:PAL.grass,
+      bgGradient:['#030610','#0a1530','#15254a','#1a3060'],
+      enemyTypes:['skeleton','bat'],
+      enemyCount:15,
+      platformHeight:[155,115,75],
+      bossType:'wyvern', // Jefe menor
+      bossX:3000
+    },
+    2:{ // NIVEL 2: CAMINO A SANTA FE  
+      groundColor:'#c2b280', // Arena/camino
+      bgGradient:['#2a1810','#4a3020','#6a4830','#8a6040'],
+      enemyTypes:['skeleton','ghost','bat'],
+      enemyCount:20,
+      platformHeight:[150,110,70],
+      bossType:'boabdil', // Rey Boabdil
+      bossX:3500
+    },
+    3:{ // NIVEL 3: CASTILLO REAL
+      groundColor:PAL.stone,
+      bgGradient:['#1a1a2e','#2d2d44','#40405a','#535370'],
+      enemyTypes:['skeleton','ghost','wyvern'],
+      enemyCount:25,
+      platformHeight:[145,105,65],
+      bossType:'boabdil', // Jefe final
+      bossX:4000
+    }
+  };
 
-  const fl=[
-    // Nivel 1: Desde suelo (215) - altura 155 (diferencia 60)
-    {x:220,y:155,w:55},{x:380,y:155,w:50},{x:530,y:155,w:45},
-    // Nivel 2: Desde nivel 1 (155) - altura 115 (diferencia 40)
-    {x:680,y:115,w:60},{x:850,y:115,w:50},{x:1000,y:115,w:55},
-    // Nivel 3: Desde nivel 2 (115) - altura 75 (diferencia 40)
-    {x:1150,y:75,w:60},{x:1300,y:75,w:55},{x:1450,y:75,w:50},
-    // Bajada gradual
-    {x:1620,y:115,w:65},{x:1780,y:155,w:55},{x:1920,y:155,w:50},
-    // Subida de nuevo
-    {x:2060,y:115,w:60},{x:2200,y:115,w:55},{x:2380,y:115,w:50},
-    // Nivel alto
-    {x:2550,y:75,w:65},{x:2720,y:75,w:55},{x:2880,y:75,w:50},
-    // Mixto
-    {x:3050,y:115,w:60},{x:3200,y:115,w:65},{x:3380,y:155,w:50},
-    {x:3520,y:115,w:55},{x:3680,y:115,w:60},{x:3850,y:155,w:55},
-    {x:4100,y:115,w:60},{x:4300,y:75,w:65},{x:4500,y:115,w:55}];
+  const cfg=levelConfig[currentLevel]||levelConfig[1];
+
+  // Generar suelo
+  platforms.push({x:0,y:GROUND_Y,w:LEVEL_W,h:60,type:'ground',color:cfg.groundColor});
+
+  // Generar plataformas según nivel
+  const fl=[];
+  const platCount=20+currentLevel*5;
+  for(let i=0;i<platCount;i++){
+    const x=300+i*(LEVEL_W/platCount)+Math.random()*100;
+    const hIdx=Math.floor(Math.random()*cfg.platformHeight.length);
+    fl.push({x:x,y:cfg.platformHeight[hIdx],w:50+Math.random()*30});
+  }
   for(const f of fl)platforms.push({x:f.x,y:f.y,w:f.w,h:11,type:'float'});
 
-      
-  // ENEMIGOS
-  for(let x=250;x<520;x+=130)enemies.push(mkE(x,GROUND_Y-24,'skeleton'));
-  enemies.push(mkE(650,75,'bat'));enemies.push(mkE(780,GROUND_Y-24,'skeleton'));enemies.push(mkE(900,65,'bat'));
-  enemies.push(mkE(1200,90,'ghost'));enemies.push(mkE(1350,GROUND_Y-24,'skeleton'));
-  enemies.push(mkE(1600,GROUND_Y-22,'wyvern'));enemies.push(mkE(1750,60,'bat'));enemies.push(mkE(1900,GROUND_Y-24,'skeleton'));
-  enemies.push(mkE(2150,GROUND_Y-22,'wyvern'));enemies.push(mkE(2300,GROUND_Y-24,'skeleton'));enemies.push(mkE(2450,70,'bat'));
-  enemies.push(mkE(2700,80,'ghost'));enemies.push(mkE(2850,GROUND_Y-24,'skeleton'));enemies.push(mkE(2950,GROUND_Y-22,'wyvern'));
-  enemies.push(mkE(3250,65,'bat'));enemies.push(mkE(3400,GROUND_Y-24,'skeleton'));enemies.push(mkE(3550,GROUND_Y-22,'wyvern'));
-  enemies.push(mkE(4450,GROUND_Y-48,'dragon'));
+  // Generar enemigos según nivel
+  for(let i=0;i<cfg.enemyCount;i++){
+    const x=300+i*((LEVEL_W-600)/cfg.enemyCount)+Math.random()*50;
+    const typeIdx=Math.floor(Math.random()*cfg.enemyTypes.length);
+    const type=cfg.enemyTypes[typeIdx];
+    const y=type==='bat'?50+Math.random()*100:GROUND_Y-24;
+    enemies.push(mkE(x,y,type));
+  }
 
-  const cd=[
-    // Cofres en el suelo con variedad de items
-    {x:320,y:GROUND_Y-14,item:'coin'},       // Monedas
-    {x:600,y:GROUND_Y-14,item:'heart'},      // Vida
-    {x:900,y:GROUND_Y-14,item:'armor'},      // Armadura (repara si está dañada)
-    {x:1200,y:GROUND_Y-14,item:'axe'},       // Hacha (arma poderosa)
-    {x:1500,y:GROUND_Y-14,item:'heart'},     // Vida
-    {x:1800,y:GROUND_Y-14,item:'fireball'},  // Bola de fuego (arma mágica)
-    {x:2100,y:GROUND_Y-14,item:'armor'},     // Armadura
-    {x:2400,y:GROUND_Y-14,item:'axe'},       // Hacha
-    {x:2700,y:GROUND_Y-14,item:'heart'},     // Vida
-    {x:3000,y:GROUND_Y-14,item:'fireball'}   // Bola de fuego
-  ];
-  for(const c of cd)chests.push({x:c.x,y:c.y,w:16,h:14,item:c.item,open:false});
+  // Jefe del nivel
+  if(cfg.bossType==='wyvern'){
+    enemies.push(mkE(cfg.bossX,GROUND_Y-22,'wyvern'));
+  }else{
+    enemies.push(mkE(cfg.bossX,GROUND_Y-48,'boabdil'));
+  }
 
-  for(let x=60;x<LEVEL_W;x+=Math.random()*500+400)decorations.push({x,y:GROUND_Y-28,type:'tent'});
-  for(let x=120;x<LEVEL_W;x+=Math.random()*350+250)decorations.push({x,y:GROUND_Y-28,type:'banner'});
-  for(let x=180;x<LEVEL_W;x+=Math.random()*300+200)decorations.push({x,y:GROUND_Y-22,type:'tomb'});
+  // Cofres (más en niveles avanzados)
+  const chestCount=8+currentLevel*2;
+  const items=['coin','heart','armor','axe','fireball'];
+  for(let i=0;i<chestCount;i++){
+    const x=200+i*((LEVEL_W-400)/chestCount);
+    const itemIdx=Math.floor(Math.random()*items.length);
+    chests.push({x:x,y:GROUND_Y-14,w:16,h:14,item:items[itemIdx],open:false});
+  }
 
-  for(const s of LORE)signs.push({...s,shown:false,timer:0});
+  // Decoraciones
+  for(let x=60;x<LEVEL_W;x+=Math.random()*400+300){
+    decorations.push({x,y:GROUND_Y-28,type:'tent'});
+  }
+
+  // Mostrar mensaje de nivel
+  showLevelMessage();
 }
 
 function mkE(x,y,type){
@@ -906,7 +1086,17 @@ function update(){
       e.hp--;spawnParts(pr.x,pr.y,5,'#ff0');
       if(e.hp<=0){e.dead=true;score+=e.type==='boabdil'?5000:e.type==='ghost'?500:100;
         spawnParts(e.x+e.w/2,e.y+e.h/2,15,'#ff4040');
-        if(e.type==='boabdil'){state='victory';shake=20;}}
+        if(e.type==='boabdil'){
+      if(currentLevel < maxLevels){
+        // Pasar al siguiente nivel
+        currentLevel++;
+        startNextLevel();
+      }else{
+        // Victoria final
+        state='victory';
+        shake=20;
+      }
+    }}
       projectiles.splice(i,1);break;}}}
     else{if(!P.dead&&P.invuln<=0&&overlap(pr,P)){pHit();projectiles.splice(i,1);}}
   }
@@ -1203,8 +1393,9 @@ function drawWin(){
   $.font='bold 24px Arial';$.fillStyle='#8a6600';$.fillText('¡VICTORIA!',W/2+2,H/2-28);
   $.fillStyle=PAL.gold;$.fillText('¡VICTORIA!',W/2,H/2-30);
   $.font='13px Arial';$.fillStyle='#d0d0e0';
-  $.fillText('Has llegado a las puertas de Santa Fe.',W/2,H/2);
-  $.fillText('Las Capitulaciones están a salvo.',W/2,H/2+16);
+  $.fillText('¡Has completado todos los niveles!',W/2,H/2);
+  $.fillText('Has llegado a las puertas de Santa Fe.',W/2,H/2+18);
+  $.fillText('Las Capitulaciones están a salvo.',W/2,H/2+36);
   $.font='13px Arial';$.fillStyle='#a0a0b0';
   $.fillText('El 2 de enero de 1492, Granada se rindió.',W/2,H/2+36);
   $.fillText('Colón firmó aquí el viaje que cambiaría el mundo.',W/2,H/2+50);
@@ -1223,5 +1414,32 @@ function startGame_(){
 buildSprites();
 (function loop(){update();draw();requestAnimationFrame(loop)})();
 </script>
+
+<!-- TECLADO VIRTUAL PARA QUIZ MATEMÁTICO (solo visible en móvil durante quiz) -->
+<div id="virtualKeyboard" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.9);padding:10px;z-index:200;box-sizing:border-box;">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="vk-btn" data-num="1" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">1</button>
+      <button class="vk-btn" data-num="2" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">2</button>
+      <button class="vk-btn" data-num="3" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">3</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="vk-btn" data-num="4" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">4</button>
+      <button class="vk-btn" data-num="5" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">5</button>
+      <button class="vk-btn" data-num="6" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">6</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="vk-btn" data-num="7" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">7</button>
+      <button class="vk-btn" data-num="8" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">8</button>
+      <button class="vk-btn" data-num="9" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">9</button>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="vk-btn" data-num="0" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">0</button>
+      <button class="vk-btn" data-action="backspace" style="width:60px;height:50px;font-size:16px;border:none;border-radius:8px;background:#ff6600;color:white;">⌫</button>
+      <button class="vk-btn" data-action="clear" style="width:60px;height:50px;font-size:16px;border:none;border-radius:8px;background:#ff3333;color:white;">C</button>
+    </div>
+    <button class="vk-btn" data-action="check" style="width:200px;height:50px;font-size:18px;border:none;border-radius:8px;background:#00aa00;color:white;font-weight:bold;">COMPROBAR</button>
+  </div>
+</div>
 </body>
 </html>
