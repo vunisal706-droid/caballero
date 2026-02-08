@@ -2,12 +2,76 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, orientation=landscape">
 <title>EL CABALLERO DE SANTA FE</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  touch-action:none;
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* Forzar orientación landscape SOLO en dispositivos móviles táctiles */
+body.mobile-portrait::before {
+  content: "Por favor, gira tu dispositivo a horizontal ↻";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #1a1a2e;
+  color: #ffd700;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: Arial, sans-serif;
+  font-size: 24px;
+  text-align: center;
+  z-index: 9999;
+  padding: 20px;
+}
+body.mobile-portrait #game-container,
+body.mobile-portrait #touchControls {
+  display: none !important;
+}
+
+/* Prevenir scroll y bounce en iOS */
+html, body {
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
 body{background:#0a0a12;display:flex;justify-content:center;align-items:center;min-height:100vh;min-height:100dvh;font-family:Arial;overflow:hidden;flex-direction:column;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
-#game-container{position:relative;width:100%;max-width:800px;aspect-ratio:16/9;background:#000;image-rendering:pixelated;image-rendering:crisp-edges;border:3px solid #222;border-radius:4px;box-shadow:0 0 40px rgba(100,50,200,0.3),inset 0 0 20px rgba(0,0,0,0.5)}
+#game-container{
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  aspect-ratio: 16/9;
+  background: #000;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 3px solid #222;
+  border-radius: 4px;
+  box-shadow: 0 0 40px rgba(100,50,200,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* En móviles pequeños, ajustar tamaño */
+@media screen and (max-width: 900px) {
+  #game-container {
+    width: 100vw;
+    height: 56.25vw; /* 16:9 ratio */
+    max-height: 60vh;
+  }
+}
+
 canvas{display:block;width:100%;height:100%}
 .scanlines{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06),rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);pointer-events:none;z-index:10}
 #touchControls{display:none;position:fixed;bottom:0;left:0;width:100%;height:180px;z-index:100;pointer-events:none}
@@ -51,6 +115,29 @@ canvas{display:block;width:100%;height:100%}
 </div>
 
 <script>
+
+// DETECCIÓN DE DISPOSITIVO Y ORIENTACIÓN - CORREGIDA
+function checkOrientation(){
+  // Solo detectar móviles reales por User Agent
+  const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(navigator.userAgent);
+  
+  // Detectar si está en portrait (vertical)
+  const isPortrait = window.innerHeight > window.innerWidth;
+
+  // Solo aplicar en móviles en portrait
+  if(isMobile && isPortrait){
+    document.body.classList.add('mobile-portrait');
+  }else{
+    document.body.classList.remove('mobile-portrait');
+  }
+}
+
+// Verificar al cargar y al cambiar orientación/tamaño
+checkOrientation();
+window.addEventListener('resize', checkOrientation);
+window.addEventListener('orientationchange', checkOrientation);
+
+
 // ============================================================
 // EL CABALLERO DE SANTA FE - 1491
 // Aventura de plataformas histórica
@@ -76,6 +163,7 @@ function sfxShoot(){snd(700,0.07);setTimeout(()=>snd(550,0.05),25)}
 function sfxPickup(){snd(600,0.08);setTimeout(()=>snd(800,0.08),70);setTimeout(()=>snd(1000,0.12),140)}
 function sfxDeath(){snd(200,0.35,'sawtooth',0.1);setTimeout(()=>snd(100,0.4,'sawtooth',0.08),180)}
 function sfxChest(){snd(400,0.08);setTimeout(()=>snd(600,0.08),90);setTimeout(()=>snd(800,0.12),180)}
+function sfxClick(){snd(800,0.04)}
 
 // --- STORY ---
 const STORY=[
@@ -114,8 +202,22 @@ let camX=0,storyPage=0,storyTimer=0,menuAnim=0;
 const GRAV=0.32,JUMP=-7.2,SPEED=2.0,FIRE_RATE=20;
 const LEVEL_W=4800,GROUND_Y=215;
 
-// Sistema de preguntas matemáticas
-let mathQuiz={active:false,paused:false,chest:null,question:'',answer:0,usedQuestions:[],input:'',correct:false,showResult:0,buttonHover:false};
+// Sistema de preguntas matemáticas CON TECLADO VIRTUAL
+let mathQuiz={
+  active:false,
+  chest:null,
+  question:'',
+  answer:0,
+  usedQuestions:[],
+  input:'',
+  correct:false,
+  showResult:0,
+  // Teclado virtual integrado
+  keyboard:{
+    buttons:[],
+    hoveredBtn:null
+  }
+};
 
 const P={x:40,y:GROUND_Y-28,w:16,h:28,vx:0,vy:0,dir:1,onGround:false,
   attacking:false,attackTimer:0,invuln:0,fireCd:0,anim:0,dead:false,deathTimer:0};
@@ -132,9 +234,24 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Enter')keys.enter=true;
   
   // Teclas numéricas para el quiz matemático
-  if(e.key>='0'&&e.key<='9')keys[e.key]=true;
-  if(e.key==='Backspace')keys['Backspace']=true;
-  if(e.key==='Enter')keys['enter']=true;e.preventDefault();
+  if(mathQuiz.active){
+    if(e.key>='0'&&e.key<='9'){
+      if(mathQuiz.input.length<3){
+        mathQuiz.input+=e.key;
+        sfxClick();
+      }
+      e.preventDefault();
+    }
+    if(e.key==='Backspace'){
+      mathQuiz.input=mathQuiz.input.slice(0,-1);
+      sfxClick();
+      e.preventDefault();
+    }
+    if(e.key==='Enter'){
+      if(mathQuiz.input.length>0)checkMathAnswer();
+      e.preventDefault();
+    }
+  }
 });
 document.addEventListener('keyup',e=>{
   if(e.key==='ArrowLeft'||e.key==='a')keys.left=false;
@@ -144,6 +261,8 @@ document.addEventListener('keyup',e=>{
   if(e.key==='z'||e.key==='x'||e.key==='j'||e.key==='k')keys.fire=false;
   if(e.key==='Enter')keys.enter=false;
 });
+
+// Event listeners para controles táctiles
 document.querySelectorAll('[data-key]').forEach(btn=>{
   const k=btn.dataset.key;
   const on=()=>{initAudio();keys[k]=true;btn.classList.add('pressed')};
@@ -153,189 +272,51 @@ document.querySelectorAll('[data-key]').forEach(btn=>{
   btn.addEventListener('touchcancel',e=>{e.preventDefault();off()});
   btn.addEventListener('mousedown',on);btn.addEventListener('mouseup',off);btn.addEventListener('mouseleave',off);
 });
-C.addEventListener('click',()=>initAudio());
 
-
-// TECLADO VIRTUAL PARA MÓVILES
-const virtualKeyboard = document.getElementById('virtualKeyboard');
-
-function showVirtualKeyboard(){
-  if(virtualKeyboard) virtualKeyboard.style.display = 'block';
-}
-
-function hideVirtualKeyboard(){
-  if(virtualKeyboard) virtualKeyboard.style.display = 'none';
-}
-
-// Event listeners para botones del teclado virtual
-document.querySelectorAll('.vk-btn').forEach(btn=>{
-  btn.addEventListener('touchstart', e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    if(!mathQuiz.active) return;
-
-    const num = btn.dataset.num;
-    const action = btn.dataset.action;
-
-    if(num !== undefined){
-      // Número presionado
-      if(mathQuiz.input.length < 3){
-        mathQuiz.input += num;
-      }
-    }else if(action === 'backspace'){
-      mathQuiz.input = mathQuiz.input.slice(0, -1);
-    }else if(action === 'clear'){
-      mathQuiz.input = '';
-    }else if(action === 'check'){
-      if(mathQuiz.input.length > 0){
-        checkMathAnswer();
-      }
-    }
-  });
-
-  btn.addEventListener('click', e=>{
-    e.preventDefault();
-    e.stopPropagation();
-    if(!mathQuiz.active) return;
-
-    const num = btn.dataset.num;
-    const action = btn.dataset.action;
-
-    if(num !== undefined){
-      if(mathQuiz.input.length < 3){
-        mathQuiz.input += num;
-      }
-    }else if(action === 'backspace'){
-      mathQuiz.input = mathQuiz.input.slice(0, -1);
-    }else if(action === 'clear'){
-      mathQuiz.input = '';
-    }else if(action === 'check'){
-      if(mathQuiz.input.length > 0){
-        checkMathAnswer();
-      }
-    }
-  });
-});
-
-// Mostrar/ocultar teclado virtual según el estado del quiz
-const originalStartMathQuiz = startMathQuiz;
-startMathQuiz = function(chest){
-  originalStartMathQuiz(chest);
-  showVirtualKeyboard();
-};
-
-const originalCheckMathAnswer = checkMathAnswer;
-checkMathAnswer = function(){
-  originalCheckMathAnswer();
-  // No ocultar inmediatamente, esperar a que se vea el resultado
-  setTimeout(()=>{
-    if(!mathQuiz.active) hideVirtualKeyboard();
-  }, 2000);
-};
-
-// También ocultar cuando se presiona Escape
-const originalUpdateMathQuiz = updateMathQuiz;
-updateMathQuiz = function(){
-  originalUpdateMathQuiz();
-  if(keys['Escape']){
-    hideVirtualKeyboard();
-  }
-};
-
-// INPUT NATIVO PARA MÓVILES (alternativa al teclado virtual)
-// Crear un input oculto que capture el teclado nativo
-const hiddenInput = document.createElement('input');
-hiddenInput.type = 'number';
-hiddenInput.style.position = 'absolute';
-hiddenInput.style.opacity = '0';
-hiddenInput.style.pointerEvents = 'none';
-hiddenInput.style.left = '-1000px';
-document.body.appendChild(hiddenInput);
-
-// Al activar el quiz, enfocar el input oculto para mostrar teclado nativo
-const originalStartMathQuizNative = startMathQuiz;
-startMathQuiz = function(chest){
-  originalStartMathQuizNative(chest);
-  // Intentar mostrar teclado nativo en móviles
-  if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)){
-    hiddenInput.value = '';
-    hiddenInput.focus();
-    showVirtualKeyboard(); // Mostrar ambos por si acaso
-  }
-};
-
-// Sincronizar input oculto con mathQuiz
-hiddenInput.addEventListener('input', e=>{
-  if(mathQuiz.active){
-    const val = hiddenInput.value.replace(/[^0-9]/g, '');
-    if(val.length <= 3){
-      mathQuiz.input = val;
-    }
-  }
-});
-
-hiddenInput.addEventListener('keydown', e=>{
-  if(e.key === 'Enter' && mathQuiz.active && mathQuiz.input.length > 0){
-    checkMathAnswer();
-    hiddenInput.blur();
-  }
-});
-
-// Event listeners para botón Comprobar del quiz matemático
-C.addEventListener('mousedown',e=>{
-  if(!mathQuiz.active)return;
-  const rect=C.getBoundingClientRect();
-  const scaleX=C.width/rect.width;
-  const scaleY=C.height/rect.height;
-  const x=(e.clientX-rect.left)*scaleX;
-  const y=(e.clientY-rect.top)*scaleY;
-
-  // Verificar si está sobre el botón
-  if(x>=mathQuiz.btnX&&x<=mathQuiz.btnX+mathQuiz.btnW&&
-     y>=mathQuiz.btnY&&y<=mathQuiz.btnY+mathQuiz.btnH){
-    if(mathQuiz.input.length>0){
-      checkMathAnswer();
-    }
-  }
-});
-
-C.addEventListener('touchstart',e=>{
-  if(!mathQuiz.active)return;
-  e.preventDefault();
-  const rect=C.getBoundingClientRect();
-  const scaleX=C.width/rect.width;
-  const scaleY=C.height/rect.height;
-  const touch=e.touches[0];
-  const x=(touch.clientX-rect.left)*scaleX;
-  const y=(touch.clientY-rect.top)*scaleY;
-
-  // Verificar si está sobre el botón
-  if(x>=mathQuiz.btnX&&x<=mathQuiz.btnX+mathQuiz.btnW&&
-     y>=mathQuiz.btnY&&y<=mathQuiz.btnY+mathQuiz.btnH){
-    if(mathQuiz.input.length>0){
-      checkMathAnswer();
-    }
-  }
-});
-
-// Hover effect para el botón
+// Event listener para clics en el canvas (teclado virtual)
+let mouseX=0,mouseY=0;
 C.addEventListener('mousemove',e=>{
-  if(!mathQuiz.active)return;
   const rect=C.getBoundingClientRect();
-  const scaleX=C.width/rect.width;
-  const scaleY=C.height/rect.height;
-  const x=(e.clientX-rect.left)*scaleX;
-  const y=(e.clientY-rect.top)*scaleY;
-
-  mathQuiz.buttonHover=(x>=mathQuiz.btnX&&x<=mathQuiz.btnX+mathQuiz.btnW&&
-                        y>=mathQuiz.btnY&&y<=mathQuiz.btnY+mathQuiz.btnH);
+  mouseX=(e.clientX-rect.left)*(W/rect.width);
+  mouseY=(e.clientY-rect.top)*(H/rect.height);
+});
+C.addEventListener('click',e=>{
+  initAudio();
+  if(mathQuiz.active)handleKeyboardClick();
+});
+C.addEventListener('touchstart',e=>{
+  initAudio();
+  if(e.touches.length>0){
+    const rect=C.getBoundingClientRect();
+    mouseX=(e.touches[0].clientX-rect.left)*(W/rect.width);
+    mouseY=(e.touches[0].clientY-rect.top)*(H/rect.height);
+    if(mathQuiz.active)handleKeyboardClick();
+  }
+  e.preventDefault();
 });
 
+function handleKeyboardClick(){
+  for(const btn of mathQuiz.keyboard.buttons){
+    if(mouseX>=btn.x&&mouseX<=btn.x+btn.w&&mouseY>=btn.y&&mouseY<=btn.y+btn.h){
+      if(btn.value==='check'){
+        if(mathQuiz.input.length>0)checkMathAnswer();
+      }else if(btn.value==='back'){
+        mathQuiz.input=mathQuiz.input.slice(0,-1);
+        sfxClick();
+      }else{
+        if(mathQuiz.input.length<3){
+          mathQuiz.input+=btn.value;
+          sfxClick();
+        }
+      }
+      break;
+    }
+  }
+}
 
-// --- SPRITES ---
-const SC={};
 function mkSpr(name,w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');x.imageSmoothingEnabled=false;fn(x);SC[name]=c;}
 
+const SC = {};
 function buildSprites(){
   // CABALLERO MEJORADO - MÁS DETALLADO Y COLORIDO
   const drawKnight=(x,l1,l2,a1,a2,armor)=>{
@@ -728,35 +709,75 @@ function startMathQuiz(chest){
   mathQuiz.active=true;
   mathQuiz.chest=chest;
   mathQuiz.input='';
-  mathQuiz.cursor=0;
   mathQuiz.correct=false;
   mathQuiz.showResult=0;
   const q=generateMathQuestion();
   mathQuiz.question=q.text;
   mathQuiz.answer=q.ans;
+  
+  // Crear botones del teclado virtual
+  createVirtualKeyboard();
+}
+
+function createVirtualKeyboard(){
+  mathQuiz.keyboard.buttons=[];
+  const btnW=28,btnH=28,gap=4;
+  const startX=70,startY=135;
+  
+  // Números 1-9 en grid 3x3
+  for(let i=0;i<9;i++){
+    const row=Math.floor(i/3);
+    const col=i%3;
+    mathQuiz.keyboard.buttons.push({
+      x:startX+col*(btnW+gap),
+      y:startY+row*(btnH+gap),
+      w:btnW,
+      h:btnH,
+      value:''+(i+1),
+      label:''+(i+1)
+    });
+  }
+  
+  // Fila inferior: 0, Borrar, Comprobar
+  mathQuiz.keyboard.buttons.push({
+    x:startX,
+    y:startY+3*(btnH+gap),
+    w:btnW,
+    h:btnH,
+    value:'0',
+    label:'0'
+  });
+  
+  mathQuiz.keyboard.buttons.push({
+    x:startX+(btnW+gap),
+    y:startY+3*(btnH+gap),
+    w:btnW,
+    h:btnH,
+    value:'back',
+    label:'⌫'
+  });
+  
+  mathQuiz.keyboard.buttons.push({
+    x:startX+2*(btnW+gap),
+    y:startY+3*(btnH+gap),
+    w:btnW*2+gap,
+    h:btnH,
+    value:'check',
+    label:'✓'
+  });
 }
 
 function updateMathQuiz(){
   if(!mathQuiz.active)return;
 
-  // Manejar input numérico
-  for(let i=0;i<=9;i++){
-    if(keys[i.toString()]||keys['Numpad'+i]){
-      if(mathQuiz.input.length<3){
-        mathQuiz.input+=i.toString();
-        keys[i.toString()]=false;
-        keys['Numpad'+i]=false;
-      }
+  // Actualizar hover del teclado virtual
+  mathQuiz.keyboard.hoveredBtn=null;
+  for(const btn of mathQuiz.keyboard.buttons){
+    if(mouseX>=btn.x&&mouseX<=btn.x+btn.w&&mouseY>=btn.y&&mouseY<=btn.y+btn.h){
+      mathQuiz.keyboard.hoveredBtn=btn;
+      break;
     }
   }
-  // Backspace
-  if(keys['Backspace']){
-    mathQuiz.input=mathQuiz.input.slice(0,-1);
-    keys['Backspace']=false;
-  }
-
-  // Verificar clic en botón Comprobar (detección simple)
-  checkMathButtonClick();
 
   // Cerrar después de mostrar resultado
   if(mathQuiz.showResult>0){
@@ -768,13 +789,6 @@ function updateMathQuiz(){
       mathQuiz.input='';
     }
   }
-  // Escape de emergencia - clic fuera del panel cierra
-  if(keys['Escape']){
-    mathQuiz.active=false;
-    mathQuiz.chest=null;
-    mathQuiz.input='';
-    keys['Escape']=false;
-  }
 }
 
 function checkMathAnswer(){
@@ -782,111 +796,150 @@ function checkMathAnswer(){
   const userAns=parseInt(mathQuiz.input);
   if(userAns===mathQuiz.answer){
     mathQuiz.correct=true;
-    mathQuiz.showResult=60;
+    mathQuiz.showResult=90;
+    sfxChest();
     // Abrir cofre
     if(mathQuiz.chest){
       mathQuiz.chest.open=true;
-      sfxChest();
       spawnPk(mathQuiz.chest.x,mathQuiz.chest.y-18,mathQuiz.chest.item);
     }
   }else{
     mathQuiz.correct=false;
     mathQuiz.showResult=60;
+    sfxHit();
     // Limpiar input para reintentar
     mathQuiz.input='';
   }
-}
-
-function checkMathButtonClick(){
-  // Solo procesar si hay input
-  if(mathQuiz.input.length===0)return;
-
-  // Verificar si se hizo clic en el botón (usando mouse o touch)
-  // Esto se manejará mediante event listeners separados
 }
 
 function drawMathQuiz(){
   if(!mathQuiz.active)return;
 
   // Fondo oscuro semitransparente
-  $.fillStyle='rgba(0,0,0,0.85)';
+  $.fillStyle='rgba(0,0,0,0.88)';
   $.fillRect(0,0,W,H);
 
-  // Panel de pregunta
-  const pw=340,ph=220,px=(W-pw)/2,py=(H-ph)/2;
-  $.fillStyle='rgba(255,255,255,0.98)';
+  // Panel de pregunta - más grande para acomodar el teclado
+  const pw=380,ph=240,px=(W-pw)/2,py=(H-ph)/2-10;
+  
+  // Sombra del panel
+  $.fillStyle='rgba(0,0,0,0.5)';
+  $.fillRect(px+4,py+4,pw,ph);
+  
+  // Panel principal
+  $.fillStyle='#f5f5f5';
   $.fillRect(px,py,pw,ph);
+  
+  // Borde del panel
   $.strokeStyle='#0066cc';
-  $.lineWidth=4;
+  $.lineWidth=5;
   $.strokeRect(px,py,pw,ph);
+  
+  $.strokeStyle='#004499';
+  $.lineWidth=2;
+  $.strokeRect(px+2,py+2,pw-4,ph-4);
 
-  // Título
+  // Título con ícono de candado
   $.font='bold 18px Arial';
   $.fillStyle='#0066cc';
   $.textAlign='center';
-  $.fillText('¡COFRE CERRADO CON CANDADO!',W/2,py+30);
+  $.fillText('🔒 COFRE BLOQUEADO',W/2,py+25);
 
   // Instrucción
-  $.font='13px Arial';
-  $.fillStyle='#333';
-  $.fillText('Resuelve la multiplicación para abrirlo:',W/2,py+55);
+  $.font='12px Arial';
+  $.fillStyle='#444';
+  $.fillText('Resuelve la multiplicación para abrirlo:',W/2,py+45);
 
-  // Pregunta
-  $.font='bold 42px Arial';
-  $.fillStyle='#000';
-  $.fillText(mathQuiz.question,W/2,py+100);
+  // Pregunta matemática
+  $.font='bold 36px Arial';
+  $.fillStyle='#222';
+  $.fillText(mathQuiz.question,W/2,py+85);
 
-  // Input del usuario (caja de texto)
-  const inputW=120,inputH=40,inputX=(W-inputW)/2,inputY=py+125;
-  $.fillStyle='#f0f0f0';
+  // Display del input (pantalla de respuesta)
+  const inputW=140,inputH=40,inputX=(W-inputW)/2,inputY=py+100;
+  
+  // Sombra del input
+  $.fillStyle='rgba(0,0,0,0.2)';
+  $.fillRect(inputX+2,inputY+2,inputW,inputH);
+  
+  // Fondo del input
+  $.fillStyle='#fff';
   $.fillRect(inputX,inputY,inputW,inputH);
+  
+  // Borde del input
   $.strokeStyle='#0066cc';
-  $.lineWidth=2;
+  $.lineWidth=3;
   $.strokeRect(inputX,inputY,inputW,inputH);
 
-  $.font='bold 28px Arial';
+  // Texto del input con cursor parpadeante
+  $.font='bold 32px Arial';
   $.fillStyle='#000';
-  $.fillText(mathQuiz.input+(Math.floor(Date.now()/500)%2==0?'_':''),W/2,inputY+30);
+  const displayText=mathQuiz.input+(Math.floor(Date.now()/500)%2==0?'_':'');
+  $.fillText(displayText,W/2,inputY+30);
 
-  // Botón COMPROBAR
-  const btnW=140,btnH=35,btnX=(W-btnW)/2,btnY=py+175;
-  const btnColor=mathQuiz.input.length>0?(mathQuiz.buttonHover?'#0055aa':'#0066cc'):'#888888';
+  // DIBUJAR TECLADO VIRTUAL
+  for(const btn of mathQuiz.keyboard.buttons){
+    const isHovered=mathQuiz.keyboard.hoveredBtn===btn;
+    const isCheck=btn.value==='check';
+    const isBack=btn.value==='back';
+    
+    // Sombra del botón
+    $.fillStyle='rgba(0,0,0,0.3)';
+    $.fillRect(btn.x+2,btn.y+2,btn.w,btn.h);
+    
+    // Color del botón
+    if(isCheck){
+      $.fillStyle=isHovered?'#00cc00':'#00aa00';
+    }else if(isBack){
+      $.fillStyle=isHovered?'#ff8800':'#ff6600';
+    }else{
+      $.fillStyle=isHovered?'#0088ff':'#0066cc';
+    }
+    $.fillRect(btn.x,btn.y,btn.w,btn.h);
+    
+    // Borde del botón
+    $.strokeStyle=isHovered?'#fff':'rgba(0,0,0,0.3)';
+    $.lineWidth=2;
+    $.strokeRect(btn.x,btn.y,btn.w,btn.h);
+    
+    // Efecto de presionado
+    if(isHovered){
+      $.fillStyle='rgba(255,255,255,0.2)';
+      $.fillRect(btn.x,btn.y,btn.w,btn.h/2);
+    }
+    
+    // Texto del botón
+    $.font=isCheck?'bold 20px Arial':'bold 18px Arial';
+    $.fillStyle='#fff';
+    $.textAlign='center';
+    $.fillText(btn.label,btn.x+btn.w/2,btn.y+btn.h/2+7);
+  }
 
-  // Guardar posición del botón para detección de clic
-  mathQuiz.btnX=btnX;mathQuiz.btnY=btnY;mathQuiz.btnW=btnW;mathQuiz.btnH=btnH;
-
-  $.fillStyle=btnColor;
-  $.fillRect(btnX,btnY,btnW,btnH);
-  $.strokeStyle='#004499';
-  $.lineWidth=2;
-  $.strokeRect(btnX,btnY,btnW,btnH);
-
-  $.font='bold 16px Arial';
-  $.fillStyle='#fff';
-  $.fillText('COMPROBAR',W/2,btnY+24);
-
-  // Instrucciones adicionales
+  // Instrucción del teclado
   $.font='10px Arial';
   $.fillStyle='#666';
-  $.fillText('Usa el teclado numérico o los botones táctiles',W/2,py+205);
+  $.textAlign='center';
+  $.fillText('Usa el teclado virtual o el teclado de tu dispositivo',W/2,py+ph-8);
 
   // Resultado
   if(mathQuiz.showResult>0){
     // Overlay de resultado
-    $.fillStyle='rgba(0,0,0,0.7)';
-    $.fillRect(px+20,py+80,pw-40,ph-100);
+    $.fillStyle='rgba(0,0,0,0.75)';
+    $.fillRect(px+15,py+60,pw-30,120);
 
-    $.font='bold 28px Arial';
+    $.font='bold 32px Arial';
     if(mathQuiz.correct){
-      $.fillStyle='#00dd00';
-      $.fillText('¡CORRECTO!',W/2,py+130);
-      $.font='bold 18px Arial';
-      $.fillText('Cofre abierto',W/2,py+160);
+      $.fillStyle='#00ff00';
+      $.fillText('¡CORRECTO!',W/2,py+110);
+      $.font='bold 20px Arial';
+      $.fillStyle='#88ff88';
+      $.fillText('✓ Cofre abierto',W/2,py+145);
     }else{
-      $.fillStyle='#ff3333';
-      $.fillText('INCORRECTO',W/2,py+130);
-      $.font='bold 16px Arial';
-      $.fillText('Intenta de nuevo...',W/2,py+160);
+      $.fillStyle='#ff4444';
+      $.fillText('✗ INCORRECTO',W/2,py+110);
+      $.font='bold 18px Arial';
+      $.fillStyle='#ffaaaa';
+      $.fillText('Intenta de nuevo...',W/2,py+145);
     }
   }
 
@@ -933,10 +986,10 @@ function genLevel(){
       groundColor:PAL.grass,
       bgGradient:['#030610','#0a1530','#15254a','#1a3060'],
       enemyTypes:['skeleton','bat'],
-      enemyCount:15,
+      enemyCount:25,
       platformHeight:[155,115,75],
       bossType:'wyvern', // Jefe menor
-      bossX:3000
+      bossX:4200
     },
     2:{ // NIVEL 2: CAMINO A SANTA FE  
       groundColor:'#c2b280', // Arena/camino
@@ -1035,7 +1088,6 @@ function update(){
   // Pausar si hay quiz matemático activo
   if(mathQuiz.active){updateMathQuiz();return;}
   frame++;
-  updateMathQuiz();
 
   if(!P.dead){
     P.vx=0;
@@ -1055,8 +1107,8 @@ function update(){
     if(keys.fire&&P.fireCd<=0){P.attacking=true;P.attackTimer=12;P.fireCd=FIRE_RATE;sfxShoot();
       // Sistema de armas mejorado
     let projW=16,projH=6,projVx=P.dir*4.5,projVy=0,projLife=80,damage=1;
-    if(playerWeapon==='axe'){projW=20;projH=12;projVx=P.dir*6;damage=2;} // Hacha: más rápida, más daño
-    if(playerWeapon==='fireball'){projW=14;projH=14;projVx=P.dir*5;projVy=-1;projLife=100;damage=3;} // Fuego: daño alto, trayectoria arqueada
+    if(playerWeapon==='axe'){projW=20;projH=12;projVx=P.dir*6;damage=2;}
+    if(playerWeapon==='fireball'){projW=14;projH=14;projVx=P.dir*5;projVy=-1;projLife=100;damage=3;}
     projectiles.push({x:P.x+(P.dir>0?P.w:-projW),y:P.y+10,vx:projVx,vy:projVy,w:projW,h:projH,player:true,life:projLife,damage:damage,weapon:playerWeapon});}
     if(P.fireCd>0)P.fireCd--;
     if(P.attackTimer>0)P.attackTimer--;else P.attacking=false;
@@ -1082,22 +1134,30 @@ function update(){
   for(let i=projectiles.length-1;i>=0;i--){
     const pr=projectiles[i];pr.x+=pr.vx;pr.y+=pr.vy;pr.life--;
     if(pr.life<=0||pr.y>H+20){projectiles.splice(i,1);continue;}
-    if(pr.player){for(const e of enemies){if(!e.dead&&e.active&&overlap(pr,e)){
-      e.hp--;spawnParts(pr.x,pr.y,5,'#ff0');
-      if(e.hp<=0){e.dead=true;score+=e.type==='boabdil'?5000:e.type==='ghost'?500:100;
-        spawnParts(e.x+e.w/2,e.y+e.h/2,15,'#ff4040');
-        if(e.type==='boabdil'){
-      if(currentLevel < maxLevels){
-        // Pasar al siguiente nivel
-        currentLevel++;
-        startNextLevel();
-      }else{
-        // Victoria final
-        state='victory';
-        shake=20;
+    if(pr.player){
+      for(const e of enemies){
+        if(!e.dead&&e.active&&overlap(pr,e)){
+          e.hp--;spawnParts(pr.x,pr.y,5,'#ff0');
+          if(e.hp<=0){
+            e.dead=true;
+            score+=e.type==='boabdil'?5000:e.type==='ghost'?500:100;
+            spawnParts(e.x+e.w/2,e.y+e.h/2,15,'#ff4040');
+            // ARREGLADO: Ahora wyvern también completa el nivel
+            if(e.type==='boabdil' || e.type==='wyvern'){
+              if(currentLevel < maxLevels){
+                currentLevel++;
+                startNextLevel();
+              }else{
+                state='victory';
+                shake=20;
+              }
+            }
+          }
+          projectiles.splice(i,1);
+          break;
+        }
       }
-    }}
-      projectiles.splice(i,1);break;}}}
+    }
     else{if(!P.dead&&P.invuln<=0&&overlap(pr,P)){pHit();projectiles.splice(i,1);}}
   }
 
@@ -1138,7 +1198,8 @@ function update(){
       case 'wyvern':
         e.dir=P.x<e.x?-1:1;e.shootTimer++;
         if(e.shootTimer>200){e.shootTimer=0;const dx=P.x-e.x,dy=P.y-e.y,d=Math.sqrt(dx*dx+dy*dy)||1;
-          if(d<280)projectiles.push({x:e.x+8,y:e.y+4,vx:(dx/d)*2.2,vy:(dy/d)*2.2,w:5,h:3,player:false,life:100});}
+          if(d<280)projectiles.push({x:e.x+8,y:e.y+4,vx:(dx/d)*2.2
+          ,vy:(dy/d)*2.2,w:5,h:3,player:false,life:100});}
         break;
 
       case 'boabdil':
@@ -1241,15 +1302,12 @@ function drawProjs(){for(const pr of projectiles){
   if(pr.player){
       $.save();$.translate(pr.x,pr.y);
       if(pr.vx<0){$.scale(-1,1);$.translate(-pr.w,0);}
-      // Dibujar según el tipo de arma
       if(pr.weapon==='axe'){
         $.drawImage(SC['axe'],0,0);
-        // Efecto de rotación para el hacha
         $.strokeStyle='#ff6666';$.lineWidth=2;
         $.beginPath();$.arc(pr.w/2,pr.h/2,8,0,Math.PI*2);$.stroke();
       }else if(pr.weapon==='fireball'){
         $.drawImage(SC['fireball'],0,0);
-        // Estela de fuego
         $.fillStyle='rgba(255,100,0,0.3)';$.fillRect(-5,2,5,pr.h-4);
       }else{
         $.drawImage(SC['lance'],0,0);
@@ -1310,7 +1368,6 @@ function drawHUD(){
   if(armorOn){$.fillStyle=PAL.armor;$.fillRect(48,5,10,12);$.fillStyle='#cc1111';$.fillRect(50,8,6,4);}
   else{$.fillStyle=PAL.pink;$.fillRect(48,5,10,12);$.fillStyle='#fff';$.fillRect(51,7,4,1);}
   $.fillStyle=PAL.gold;$.textAlign='right';$.fillText('SCORE '+String(score).padStart(7,'0'),W-8,14);$.textAlign='left';
-  // Arma actual
   const weaponNames={'lance':'LANZA','axe':'HACHA','fireball':'FUEGO'};
   const weaponColors={'lance':'#aaa','axe':'#ff6666','fireball':'#ff8800'};
   $.fillStyle=weaponColors[playerWeapon]||'#aaa';
@@ -1401,11 +1458,11 @@ function drawWin(){
   $.fillText('Colón firmó aquí el viaje que cambiaría el mundo.',W/2,H/2+50);
   $.font='bold 11px Arial';$.fillStyle=PAL.gold;$.fillText('SCORE: '+String(score).padStart(7,'0'),W/2,H/2+72);
   if(Math.floor(frame/25)%2){$.font='13px Arial';$.fillStyle='#777';$.fillText('PULSA ENTER PARA JUGAR DE NUEVO',W/2,H/2+92);}
-  $.restore();if(keys.enter||keys.fire){state='menu';keys.enter=false;keys.fire=false;}
+  $.restore();if(keys.enter||keys.fire){state='menu';currentLevel=1;keys.enter=false;keys.fire=false;}
 }
 
 function startGame_(){
-  score=0;lives=3;armorOn=true;
+  score=0;lives=3;armorOn=true;currentLevel=1;
   P.x=40;P.y=GROUND_Y-40;P.vx=0;P.vy=0;P.dir=1;P.onGround=false;P.dead=false;
   P.invuln=60;P.fireCd=0;P.anim=0;P.attacking=false;P.attackTimer=0;P.deathTimer=0;
   camX=0;shake=0;flashTimer=0;frame=0;genLevel();
@@ -1414,32 +1471,5 @@ function startGame_(){
 buildSprites();
 (function loop(){update();draw();requestAnimationFrame(loop)})();
 </script>
-
-<!-- TECLADO VIRTUAL PARA QUIZ MATEMÁTICO (solo visible en móvil durante quiz) -->
-<div id="virtualKeyboard" style="display:none;position:fixed;bottom:0;left:0;width:100%;background:rgba(0,0,0,0.9);padding:10px;z-index:200;box-sizing:border-box;">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="vk-btn" data-num="1" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">1</button>
-      <button class="vk-btn" data-num="2" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">2</button>
-      <button class="vk-btn" data-num="3" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">3</button>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="vk-btn" data-num="4" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">4</button>
-      <button class="vk-btn" data-num="5" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">5</button>
-      <button class="vk-btn" data-num="6" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">6</button>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="vk-btn" data-num="7" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">7</button>
-      <button class="vk-btn" data-num="8" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">8</button>
-      <button class="vk-btn" data-num="9" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">9</button>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:center;">
-      <button class="vk-btn" data-num="0" style="width:60px;height:50px;font-size:20px;border:none;border-radius:8px;background:#0066cc;color:white;">0</button>
-      <button class="vk-btn" data-action="backspace" style="width:60px;height:50px;font-size:16px;border:none;border-radius:8px;background:#ff6600;color:white;">⌫</button>
-      <button class="vk-btn" data-action="clear" style="width:60px;height:50px;font-size:16px;border:none;border-radius:8px;background:#ff3333;color:white;">C</button>
-    </div>
-    <button class="vk-btn" data-action="check" style="width:200px;height:50px;font-size:18px;border:none;border-radius:8px;background:#00aa00;color:white;font-weight:bold;">COMPROBAR</button>
-  </div>
-</div>
 </body>
 </html>
