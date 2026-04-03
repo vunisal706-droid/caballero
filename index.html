@@ -23,12 +23,12 @@ body.mobile-portrait::before {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: #1a1a2e;
+  background: linear-gradient(135deg, #1a1a2e, #2d2d44, #1a1a2e);
   color: #ffd700;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', system-ui, sans-serif;
   font-size: 24px;
   text-align: center;
   z-index: 9999;
@@ -47,18 +47,17 @@ html, body {
 }
 
 body{
-  background:#0a0a12;
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a1a2e 50%, #151528 100%);
   display:flex;
   justify-content:center;
   align-items:center;
   min-height:100vh;
   min-height:100dvh;
-  font-family:Arial, sans-serif;
+  font-family:'Segoe UI', system-ui, sans-serif;
   overflow:hidden;
   flex-direction:column;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  text-rendering:optimizeLegibility;
 }
 
 #game-container{
@@ -67,10 +66,13 @@ body{
   max-width: 100vw;
   max-height: 100vh;
   aspect-ratio: 16/9;
-  background: #000;
-  border: 3px solid #222;
-  border-radius: 4px;
-  box-shadow: 0 0 40px rgba(100,50,200,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+  background: #0a0a14;
+  border-radius: 12px;
+  box-shadow: 
+    0 0 80px rgba(80, 60, 180, 0.3),
+    0 0 160px rgba(80, 60, 180, 0.15),
+    inset 0 0 60px rgba(0,0,0,0.4);
+  overflow: hidden;
 }
 
 @media screen and (max-width: 900px) {
@@ -78,6 +80,7 @@ body{
     width: 100vw;
     height: 56.25vw;
     max-height: 60vh;
+    border-radius: 8px;
   }
 }
 
@@ -118,21 +121,25 @@ canvas{
 
 .dpad-btn{
   position:absolute;
-  background:rgba(255,255,255,0.07);
-  border:2px solid rgba(255,255,255,0.18);
-  border-radius:14px;
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.25);
+  border-radius: 16px;
   display:flex;
   align-items:center;
   justify-content:center;
-  color:rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.7);
   font-size:26px;
-  transition:background 0.05s;
+  transition: all 0.15s ease;
   -webkit-tap-highlight-color:transparent;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .dpad-btn:active,.dpad-btn.pressed{
-  background:rgba(255,255,255,0.22);
-  border-color:rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .dpad-up{top:0;left:46px;width:58px;height:58px}
@@ -151,22 +158,27 @@ canvas{
   width:70px;
   height:70px;
   border-radius:50%;
-  background:rgba(255,255,255,0.07);
-  border:2px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(255,255,255,0.25);
   display:flex;
   align-items:center;
   justify-content:center;
-  color:rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.7);
   font-size:13px;
   font-family:inherit;
   font-weight:bold;
   letter-spacing:1px;
   -webkit-tap-highlight-color:transparent;
+  backdrop-filter: blur(8px);
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .action-btn:active,.action-btn.pressed{
-  background:rgba(255,255,255,0.22);
-  border-color:rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.5);
+  transform: scale(0.95);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
 .btn-jump{margin-bottom:40px}
@@ -179,7 +191,7 @@ canvas{
 @media (max-width:500px){
   .dpad{width:130px;height:130px}
   .dpad-bg{width:130px;height:130px}
-  .dpad-btn{border-radius:10px}
+  .dpad-btn{border-radius:12px}
   .dpad-up,.dpad-down{width:50px;height:50px;left:40px}
   .dpad-left,.dpad-right{width:50px;height:50px;top:40px}
   .action-btn{width:62px;height:62px;font-size:11px}
@@ -227,7 +239,7 @@ const W=480,H=270;
 const AudioCtx=window.AudioContext||window.webkitAudioContext;
 let audioCtx;
 function initAudio(){if(!audioCtx)audioCtx=new AudioCtx()}
-function snd(freq,dur,type='square',vol=0.06){
+function snd(freq,dur,type='square',vol=0.05){
   if(!audioCtx)return;
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
   o.type=type;
@@ -240,28 +252,31 @@ function snd(freq,dur,type='square',vol=0.06){
   o.stop(audioCtx.currentTime+dur);
 }
 function sfxJump(){snd(350,0.12);setTimeout(()=>snd(500,0.08),40)}
-function sfxHit(){snd(120,0.25,'sawtooth',0.08)}
+function sfxHit(){snd(120,0.25,'sawtooth',0.07)}
 function sfxShoot(){snd(700,0.07);setTimeout(()=>snd(550,0.05),25)}
 function sfxPickup(){snd(600,0.08);setTimeout(()=>snd(800,0.08),70);setTimeout(()=>snd(1000,0.12),140)}
-function sfxDeath(){snd(200,0.35,'sawtooth',0.1);setTimeout(()=>snd(100,0.4,'sawtooth',0.08),180)}
+function sfxDeath(){snd(200,0.35,'sawtooth',0.09);setTimeout(()=>snd(100,0.4,'sawtooth',0.07),180)}
 function sfxChest(){snd(400,0.08);setTimeout(()=>snd(600,0.08),90);setTimeout(()=>snd(800,0.12),180)}
 function sfxClick(){snd(800,0.04)}
 
 const STORY=[
   {title:'AÑO 1491',subtitle:'La Vega de Granada',text:'Los Reyes Católicos, Isabel y Fernando,\nhan establecido su campamento frente a Granada.\nEl último bastión nazarí resiste.',color:'#ffd700',bg:'#0a0818'},
-  {title:'EL INCENDIO',subtitle:'El campamento arde',text:'Un incendio ha arrasado el campamento real.\nPero los Reyes ordenan levantar una nueva ciudad\nde piedra y mortero: SANTA FE.',color:'#ff6030',bg:'#180808'},
-  {title:'TU MISIÓN',subtitle:'Caballero de la Reina',text:'Eres un caballero al servicio de Isabel.\nDebes atravesar la Vega, recuperar los pergaminos\nde las Capitulaciones y llegar a Santa Fe.',color:'#60ff60',bg:'#081808'},
-  {title:'¡CUIDADO!',subtitle:'Peligros en el camino',text:'Esqueletos, murciélagos y fantasmas\nacechan en las ruinas del campamento.\n¡Ten cuidado, caballero!',color:'#ff4040',bg:'#180808'},
+  {title:'EL INCENDIO',subtitle:'El campamento arde',text:'Un incendio ha arrasado el campamento real.\nPero los Reyes ordenan levantar una nueva ciudad\nde piedra y mortero: SANTA FE.',color:'#ff7043',bg:'#180808'},
+  {title:'TU MISIÓN',subtitle:'Caballero de la Reina',text:'Eres un caballero al servicio de Isabel.\nDebes atravesar la Vega, recuperar los pergaminos\nde las Capitulaciones y llegar a Santa Fe.',color:'#66bb6a',bg:'#081808'},
+  {title:'¡CUIDADO!',subtitle:'Peligros en el camino',text:'Esqueletos, murciélagos y fantasmas\nacechan en las ruinas del campamento.\n¡Ten cuidado, caballero!',color:'#ef5350',bg:'#180808'},
 ];
 
 const PAL={
-  armor:'#b0b8c8',armorLight:'#d0d8e8',armorDark:'#808898',
-  gold:'#ffd700',goldDark:'#cc9900',
-  skin:'#f0c090',skinDark:'#d0a070',
-  pink:'#ff80b0',pinkDark:'#cc5080',
-  grass:'#5a9a34',grassLight:'#7aba48',
-  dirt:'#6a4a2a',dirtDark:'#4a3018',
-  stone:'#6a6a7a',stoneDark:'#4a4a5a',stoneLight:'#8a8a9a',
+  armor:'#b0c4de',armorLight:'#d4e4f7',armorDark:'#8a9ab0',
+  gold:'#ffd700',goldDark:'#cc9900',goldLight:'#ffeb3b',
+  skin:'#f5d5b0',skinDark:'#e0b080',
+  pink:'#f48fb1',pinkDark:'#c06080',
+  grass:'#66bb6a',grassLight:'#81c784',grassDark:'#4caf50',
+  dirt:'#8d6e63',dirtDark:'#6d4c41',
+  stone:'#9e9e9e',stoneDark:'#757575',stoneLight:'#bdbdbd',
+  ghost:'#90caf9',ghostLight:'#bbdefb',
+  fire:'#ff7043',fireLight:'#ffab91',
+  blood:'#c62828',
 };
 
 let state='menu',frame=0,shake=0,flashTimer=0,currentLevel=1,maxLevels=3;
@@ -273,6 +288,9 @@ let levelTransitionTimer=0;
 let isTransitioning=false;
 const GRAV=0.32,JUMP=-7.2,SPEED=2.0,FIRE_RATE=20;
 const LEVEL_W=4800,GROUND_Y=215;
+
+let damageCooldown=0;
+const DAMAGE_COOLDOWN_TIME=60;
 
 let mathQuiz={
   active:false,
@@ -380,365 +398,6 @@ function handleKeyboardClick(){
   }
 }
 
-function mkSpr(name,w,h,fn){
-  const c=document.createElement('canvas');
-  c.width=w;
-  c.height=h;
-  const x=c.getContext('2d');
-  fn(x);
-  SC[name]=c;
-}
-
-const SC={};
-
-function buildSprites(){
-  const drawKnight=(x,l1,l2,a1,a2,armor)=>{
-    const armorColor=armor?PAL.armor:'#f0c090';
-    const armorLight=armor?PAL.armorLight:'#f5d5a0';
-    const armorDark=armor?PAL.armorDark:'#d0a070';
-
-    x.fillStyle=armor?'#707888':'#604020';
-    x.fillRect(3,0,10,3);
-    x.fillStyle=armorColor;
-    x.fillRect(2,2,12,6);
-    x.fillStyle=armorLight;
-    x.fillRect(4,2,8,2);
-    x.fillStyle='#404858';
-    x.fillRect(3,5,4,2);
-    x.fillStyle='#40a0ff';
-    x.fillRect(4,5,1,1);
-    x.fillStyle='#cc1111';
-    x.fillRect(7,0,3,3);
-    x.fillRect(10,1,1,2);
-
-    x.fillStyle=armorColor;
-    x.fillRect(2,8,12,8);
-    x.fillStyle=armorLight;
-    x.fillRect(4,8,8,2);
-    x.fillStyle='#cc1111';
-    x.fillRect(6,10,4,4);
-    x.fillRect(5,11,6,2);
-
-    x.fillStyle=armorDark;
-    x.fillRect(0,9+a1,3,6);
-    x.fillRect(13,9+a2,3,6);
-    x.fillStyle=armorColor;
-    x.fillRect(0,9+a1,3,4);
-    x.fillRect(13,9+a2,3,4);
-
-    x.fillStyle=armorDark;
-    x.fillRect(3,16,4,7+l1);
-    x.fillRect(9,16,4,7+l2);
-    x.fillStyle=armorColor;
-    x.fillRect(3,16,4,5);
-    x.fillRect(9,16,4,5);
-
-    x.fillStyle='#604020';
-    x.fillRect(2,23+l1,5,5-l1);
-    x.fillRect(9,23+l2,5,5-l2);
-    x.fillStyle='#805030';
-    x.fillRect(2,23+l1,5,2);
-    x.fillRect(9,23+l2,5,2);
-  };
-
-  mkSpr('ka0',16,28,x=>drawKnight(x,0,0,0,0,true));
-  mkSpr('ka1',16,28,x=>drawKnight(x,2,-1,-1,2,true));
-  mkSpr('ka2',16,28,x=>drawKnight(x,-1,2,2,-1,true));
-  mkSpr('ka_j',16,28,x=>drawKnight(x,-3,-3,-2,-2,true));
-  mkSpr('ka_a',20,28,x=>{
-    drawKnight(x,0,0,0,0,true);
-    x.fillStyle='#8B4513';
-    x.fillRect(16,12,4,2);
-    x.fillStyle='#C0C0C0';
-    x.fillRect(18,10,3,6);
-  });
-
-  mkSpr('kb0',16,28,x=>{
-    x.fillStyle='#f0c090';x.fillRect(3,0,10,8);
-    x.fillStyle='#604020';x.fillRect(3,0,10,3);
-    x.fillStyle='#fff';x.fillRect(4,3,3,3);x.fillRect(9,3,3,3);
-    x.fillStyle='#000';x.fillRect(5,4,2,2);x.fillRect(10,4,2,2);
-    x.fillStyle='#a03020';x.fillRect(6,6,4,1);
-    x.fillStyle='#f0c090';x.fillRect(3,8,10,8);
-    x.fillStyle='#ff80b0';x.fillRect(3,16,10,6);
-    x.fillStyle='#cc5080';x.fillRect(3,16,10,2);
-    x.fillStyle='#fff';x.fillRect(6,17,4,1);
-    x.fillStyle='#f0c090';x.fillRect(1,9,3,6);x.fillRect(12,9,3,6);
-    x.fillStyle='#f0c090';x.fillRect(3,22,4,6);x.fillRect(9,22,4,6);
-  });
-
-  mkSpr('kb1',16,28,x=>{
-    x.fillStyle='#f0c090';x.fillRect(3,0,10,8);
-    x.fillStyle='#604020';x.fillRect(3,0,10,3);
-    x.fillStyle='#fff';x.fillRect(4,3,3,3);x.fillRect(9,3,3,3);
-    x.fillStyle='#000';x.fillRect(5,4,2,2);x.fillRect(10,4,2,2);
-    x.fillStyle='#a03020';x.fillRect(6,6,4,1);
-    x.fillStyle='#f0c090';x.fillRect(3,8,10,8);
-    x.fillStyle='#ff80b0';x.fillRect(3,16,10,6);
-    x.fillStyle='#cc5080';x.fillRect(3,16,10,2);
-    x.fillStyle='#fff';x.fillRect(6,17,4,1);
-    x.fillStyle='#f0c090';x.fillRect(1,9,3,6);x.fillRect(12,9,3,6);
-    x.fillStyle='#f0c090';x.fillRect(2,22,4,7);x.fillRect(10,23,4,5);
-  });
-  
-  mkSpr('kb2',16,28,x=>{
-    x.fillStyle='#f0c090';x.fillRect(3,0,10,8);
-    x.fillStyle='#604020';x.fillRect(3,0,10,3);
-    x.fillStyle='#fff';x.fillRect(4,3,3,3);x.fillRect(9,3,3,3);
-    x.fillStyle='#000';x.fillRect(5,4,2,2);x.fillRect(10,4,2,2);
-    x.fillStyle='#a03020';x.fillRect(6,6,4,1);
-    x.fillStyle='#f0c090';x.fillRect(3,8,10,8);
-    x.fillStyle='#ff80b0';x.fillRect(3,16,10,6);
-    x.fillStyle='#cc5080';x.fillRect(3,16,10,2);
-    x.fillStyle='#fff';x.fillRect(6,17,4,1);
-    x.fillStyle='#f0c090';x.fillRect(1,9,3,6);x.fillRect(12,9,3,6);
-    x.fillStyle='#f0c090';x.fillRect(4,23,4,5);x.fillRect(9,22,4,7);
-  });
-
-  mkSpr('sk0',16,24,x=>{
-    x.fillStyle='#e8e8e8';x.fillRect(4,0,8,8);
-    x.fillStyle='#d0d0d0';x.fillRect(5,1,6,6);
-    x.fillStyle='#000';x.fillRect(5,3,2,2);x.fillRect(9,3,2,2);
-    x.fillStyle='#000';x.fillRect(7,5,2,1);
-    x.fillStyle='#fff';x.fillRect(6,7,4,1);
-    x.fillStyle='#d0d0d0';x.fillRect(5,8,6,8);
-    x.fillStyle='#e8e8e8';x.fillRect(4,9,1,6);x.fillRect(11,9,1,6);
-    x.fillStyle='#b0b0b0';x.fillRect(5,10,6,1);x.fillRect(5,13,6,1);
-    x.fillStyle='#d0d0d0';x.fillRect(2,9,3,6);x.fillRect(11,9,3,6);
-    x.fillStyle='#d0d0d0';x.fillRect(4,16,3,6);x.fillRect(9,16,3,6);
-    x.fillStyle='#ff0000';x.fillRect(5,3,1,1);x.fillRect(9,3,1,1);
-  });
-  
-  mkSpr('sk1',16,24,x=>{
-    x.fillStyle='#e8e8e8';x.fillRect(4,0,8,8);
-    x.fillStyle='#d0d0d0';x.fillRect(5,1,6,6);
-    x.fillStyle='#000';x.fillRect(5,3,2,2);x.fillRect(9,3,2,2);
-    x.fillStyle='#000';x.fillRect(7,5,2,1);
-    x.fillStyle='#fff';x.fillRect(6,7,4,1);
-    x.fillStyle='#d0d0d0';x.fillRect(5,8,6,8);
-    x.fillStyle='#b0b0b0';x.fillRect(5,10,6,1);x.fillRect(5,13,6,1);
-    x.fillStyle='#d0d0d0';x.fillRect(1,10,3,5);x.fillRect(12,8,3,5);
-    x.fillStyle='#d0d0d0';x.fillRect(3,16,3,6);x.fillRect(10,16,3,5);
-    x.fillStyle='#ff0000';x.fillRect(5,3,1,1);x.fillRect(9,3,1,1);
-  });
-
-  mkSpr('gh0',24,24,x=>{
-    x.fillStyle='rgba(200,220,255,0.8)';x.fillRect(6,2,12,16);
-    x.fillStyle='rgba(180,200,240,0.9)';x.fillRect(8,4,8,12);
-    x.fillStyle='rgba(220,230,255,0.95)';x.fillRect(8,0,8,8);
-    x.fillStyle='#000';x.fillRect(10,3,2,2);x.fillRect(14,3,2,2);
-    x.fillStyle='#000';x.fillRect(11,6,4,1);
-    x.fillStyle='rgba(180,200,240,0.6)';x.fillRect(9,18,6,4);
-    x.fillStyle='rgba(180,200,240,0.4)';x.fillRect(10,22,4,2);
-    x.fillStyle='rgba(200,220,255,0.7)';x.fillRect(4,8,4,4);x.fillRect(16,8,4,4);
-  });
-  
-  mkSpr('gh1',24,24,x=>{
-    x.fillStyle='rgba(200,220,255,0.75)';x.fillRect(5,1,14,17);
-    x.fillStyle='rgba(180,200,240,0.85)';x.fillRect(7,3,10,13);
-    x.fillStyle='rgba(220,230,255,0.9)';x.fillRect(7,0,10,8);
-    x.fillStyle='#000';x.fillRect(9,3,2,2);x.fillRect(13,3,2,2);
-    x.fillStyle='#000';x.fillRect(10,6,4,1);
-    x.fillStyle='rgba(180,200,240,0.5)';x.fillRect(8,18,8,4);
-    x.fillStyle='rgba(180,200,240,0.3)';x.fillRect(9,22,6,2);
-    x.fillStyle='rgba(200,220,255,0.65)';x.fillRect(3,7,5,4);x.fillRect(16,7,5,4);
-  });
-
-  mkSpr('bt0',18,12,x=>{
-    x.fillStyle='#4a3a5a';x.fillRect(6,4,6,6);
-    x.fillStyle='#6a5a7a';x.fillRect(7,5,4,4);
-    x.fillStyle='#4a3a5a';x.fillRect(7,1,4,4);
-    x.fillStyle='#4a3a5a';x.fillRect(5,0,3,4);x.fillRect(10,0,3,4);
-    x.fillStyle='#3a2a4a';x.fillRect(0,2,6,5);x.fillRect(12,2,6,5);
-    x.fillStyle='#5a4a6a';x.fillRect(1,3,4,3);x.fillRect(13,3,4,3);
-    x.fillStyle='#ff0000';x.fillRect(8,2,1,1);x.fillRect(10,2,1,1);
-  });
-  
-  mkSpr('bt1',18,12,x=>{
-    x.fillStyle='#4a3a5a';x.fillRect(6,3,6,6);
-    x.fillStyle='#6a5a7a';x.fillRect(7,4,4,4);
-    x.fillStyle='#4a3a5a';x.fillRect(7,0,4,4);
-    x.fillStyle='#4a3a5a';x.fillRect(5,1,3,3);x.fillRect(10,1,3,3);
-    x.fillStyle='#3a2a4a';x.fillRect(0,5,6,5);x.fillRect(12,5,6,5);
-    x.fillStyle='#5a4a6a';x.fillRect(1,6,4,3);x.fillRect(13,6,4,3);
-    x.fillStyle='#ff0000';x.fillRect(8,1,1,1);x.fillRect(10,1,1,1);
-  });
-
-  // WYVERN MEJORADO
-  mkSpr('wv0',32,28,x=>{
-    x.fillStyle='#1a3a2a';x.fillRect(2,18,8,8);
-    x.fillStyle='#2a5a3a';x.fillRect(3,19,6,6);
-    x.fillStyle='#ff6600';x.fillRect(4,24,2,2);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(8,10,16,12);
-    x.fillStyle='#3a7a4a';x.fillRect(10,12,12,8);
-    x.fillStyle='#4a9a6a';x.fillRect(12,14,8,4);
-    
-    x.fillStyle='#5aaa7a';x.fillRect(14,16,8,4);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(20,4,6,8);
-    x.fillStyle='#3a7a4a';x.fillRect(21,5,4,6);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(22,0,10,8);
-    x.fillStyle='#4a9a6a';x.fillRect(24,2,6,5);
-    
-    x.fillStyle='#8B4513';x.fillRect(24,0,2,3);x.fillRect(28,0,2,3);
-    x.fillStyle='#A0522D';x.fillRect(24,1,2,2);x.fillRect(28,1,2,2);
-    
-    x.fillStyle='#ffff00';x.fillRect(24,3,2,2);x.fillRect(28,3,2,2);
-    x.fillStyle='#000';x.fillRect(25,4,1,1);x.fillRect(29,4,1,1);
-    
-    x.fillStyle='#1a4a2a';x.fillRect(0,8,10,10);x.fillRect(26,8,6,10);
-    x.fillStyle='#2a6a3a';x.fillRect(2,10,6,6);x.fillRect(27,10,4,6);
-    x.fillStyle='#3a8a4a';x.fillRect(3,11,4,4);x.fillRect(28,11,2,4);
-    
-    x.fillStyle='#333';x.fillRect(10,22,3,4);x.fillRect(20,22,3,4);
-  });
-  
-  mkSpr('wv1',32,28,x=>{
-    x.fillStyle='#1a3a2a';x.fillRect(2,16,8,8);
-    x.fillStyle='#2a5a3a';x.fillRect(3,17,6,6);
-    x.fillStyle='#ff6600';x.fillRect(4,22,2,2);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(8,8,16,12);
-    x.fillStyle='#3a7a4a';x.fillRect(10,10,12,8);
-    x.fillStyle='#4a9a6a';x.fillRect(12,12,8,4);
-    
-    x.fillStyle='#5aaa7a';x.fillRect(14,14,8,4);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(20,2,6,8);
-    x.fillStyle='#3a7a4a';x.fillRect(21,3,4,6);
-    
-    x.fillStyle='#2a5a3a';x.fillRect(22,0,10,8);
-    x.fillStyle='#4a9a6a';x.fillRect(24,2,6,5);
-    
-    x.fillStyle='#8B4513';x.fillRect(24,0,2,3);x.fillRect(28,0,2,3);
-    
-    x.fillStyle='#ff0000';x.fillRect(24,3,2,2);x.fillRect(28,3,2,2);
-    x.fillStyle='#ffff00';x.fillRect(25,4,1,1);x.fillRect(29,4,1,1);
-    
-    x.fillStyle='#ff4400';x.fillRect(30,4,4,3);
-    x.fillStyle='#ff8800';x.fillRect(31,5,2,1);
-    
-    x.fillStyle='#1a4a2a';x.fillRect(0,4,10,12);x.fillRect(26,4,6,12);
-    x.fillStyle='#2a6a3a';x.fillRect(2,6,6,8);x.fillRect(27,6,4,8);
-    x.fillStyle='#3a8a4a';x.fillRect(3,8,4,5);x.fillRect(28,8,2,5);
-    
-    x.fillStyle='#333';x.fillRect(10,20,3,4);x.fillRect(20,20,3,4);
-  });
-
-  mkSpr('boabdil',48,48,x=>{
-    x.fillStyle='#8a1a1a';x.fillRect(8,16,32,24);
-    x.fillStyle='#aa2a2a';x.fillRect(10,18,28,20);
-    x.fillStyle='#cc4444';x.fillRect(14,20,20,16);
-    x.fillStyle='#8a1a1a';x.fillRect(12,4,24,16);
-    x.fillStyle='#aa2a2a';x.fillRect(14,6,20,12);
-    x.fillStyle='#333';x.fillRect(10,0,4,6);x.fillRect(34,0,4,6);
-    x.fillStyle='#ffff00';x.fillRect(16,8,6,4);x.fillRect(26,8,6,4);
-    x.fillStyle='#ff0000';x.fillRect(18,9,2,2);x.fillRect(28,9,2,2);
-    x.fillStyle='#661111';x.fillRect(0,12,12,20);x.fillRect(36,12,12,20);
-    x.fillStyle='#8a1a1a';x.fillRect(2,14,8,16);x.fillRect(38,14,8,16);
-    x.fillStyle='#333';x.fillRect(10,40,6,8);x.fillRect(32,40,6,8);
-    x.fillStyle='#666';x.fillRect(11,42,4,4);x.fillRect(33,42,4,4);
-    x.fillStyle='#ff4400';x.fillRect(20,18,8,4);
-  });
-
-  mkSpr('ch0',16,14,x=>{
-    x.fillStyle='#8B4513';x.fillRect(1,4,14,10);
-    x.fillStyle='#A0522D';x.fillRect(2,5,12,8);
-    x.fillStyle='#654321';x.fillRect(0,4,16,2);
-    x.fillStyle=PAL.gold;x.fillRect(6,7,4,4);
-    x.fillStyle=PAL.goldDark;x.fillRect(7,8,2,2);
-    x.fillStyle=PAL.gold;x.fillRect(1,4,14,1);
-  });
-  
-  mkSpr('ch1',16,14,x=>{
-    x.fillStyle='#8B4513';x.fillRect(1,6,14,8);
-    x.fillStyle='#A0522D';x.fillRect(2,7,12,6);
-    x.fillStyle='#654321';x.fillRect(0,2,16,5);
-    x.fillStyle='#A0522D';x.fillRect(1,3,14,3);
-    x.fillStyle=PAL.gold;x.fillRect(1,6,14,1);
-    x.fillStyle=PAL.gold;x.fillRect(7,0,2,2);
-    x.fillStyle='#fff';x.fillRect(5,1,1,1);x.fillRect(10,0,1,1);
-  });
-
-  mkSpr('heart',12,12,x=>{
-    x.fillStyle='#ff3060';x.fillRect(1,1,4,4);x.fillRect(7,1,4,4);
-    x.fillRect(0,3,12,4);x.fillRect(1,7,10,2);x.fillRect(2,9,8,1);x.fillRect(3,10,6,1);x.fillRect(4,11,4,1);
-    x.fillStyle='#ff6090';x.fillRect(2,2,2,2);
-  });
-  
-  mkSpr('armor_pk',14,14,x=>{
-    x.fillStyle=PAL.armor;x.fillRect(3,0,8,4);x.fillRect(2,4,10,6);x.fillRect(4,10,6,4);
-    x.fillStyle=PAL.armorLight;x.fillRect(4,1,6,2);x.fillRect(3,5,8,3);
-    x.fillStyle='#cc1111';x.fillRect(5,6,4,3);
-  });
-  
-  mkSpr('scroll',12,14,x=>{
-    x.fillStyle='#d4b880';x.fillRect(2,2,8,10);
-    x.fillStyle='#e8d4a0';x.fillRect(3,3,6,8);
-    x.fillStyle='#8B4513';x.fillRect(1,0,10,3);x.fillRect(1,11,10,3);
-    x.fillStyle='#A0522D';x.fillRect(2,1,8,1);x.fillRect(2,12,8,1);
-    x.fillStyle='rgba(80,50,20,0.4)';x.fillRect(4,4,4,1);x.fillRect(4,6,5,1);x.fillRect(4,8,3,1);
-    x.fillStyle='#cc1111';x.fillRect(6,9,2,2);
-  });
-  
-  mkSpr('coin',10,12,x=>{
-    x.fillStyle='#daa520';x.fillRect(2,0,6,12);x.fillRect(0,2,10,8);
-    x.fillStyle='#ffd700';x.fillRect(1,1,8,10);x.fillRect(2,0,6,12);
-    x.fillStyle='#ffea00';x.fillRect(3,2,4,8);x.fillStyle='#daa520';x.fillRect(4,3,2,6);
-  });
-  
-  mkSpr('lance',16,6,x=>{
-    x.fillStyle='#8B4513';x.fillRect(0,2,10,2);
-    x.fillStyle='#A0522D';x.fillRect(1,2,8,1);
-    x.fillStyle='#C0C0C0';x.fillRect(10,1,4,4);
-    x.fillStyle='#E0E0E0';x.fillRect(11,2,2,2);
-    x.fillStyle='#fff';x.fillRect(14,2,2,2);
-  });
-  
-  mkSpr('axe',16,16,x=>{
-    x.fillStyle='#8B4513';x.fillRect(2,8,12,3);
-    x.fillStyle='#A0522D';x.fillRect(3,9,10,1);
-    x.fillStyle='#C0C0C0';x.fillRect(10,2,4,8);
-    x.fillStyle='#E0E0E0';x.fillRect(11,3,2,6);
-    x.fillStyle='#ff6666';x.fillRect(10,0,4,3);
-  });
-  
-  mkSpr('fireball',14,14,x=>{
-    x.fillStyle='#ff4400';x.fillRect(3,3,8,8);
-    x.fillStyle='#ff8800';x.fillRect(4,4,6,6);
-    x.fillStyle='#ffcc00';x.fillRect(5,5,4,4);
-    x.fillStyle='#ffff00';x.fillRect(6,6,2,2);
-    x.fillStyle='#ff6600';x.fillRect(2,5,2,4);x.fillRect(10,5,2,4);
-    x.fillRect(5,2,4,2);x.fillRect(5,10,4,2);
-  });
-
-  mkSpr('tent',32,28,x=>{
-    x.fillStyle='#c0a060';x.fillRect(2,8,28,20);
-    x.fillStyle='#d4b880';x.fillRect(4,10,24,16);
-    x.fillStyle='#a08040';x.beginPath();x.moveTo(0,10);x.lineTo(16,0);x.lineTo(32,10);x.fill();
-    x.fillStyle='#c0a060';x.beginPath();x.moveTo(2,10);x.lineTo(16,2);x.lineTo(30,10);x.fill();
-    x.fillStyle='#2a1a0a';x.fillRect(11,14,10,14);
-    x.fillStyle='#cc1111';x.fillRect(15,0,2,4);x.fillRect(17,0,6,3);
-    x.fillStyle=PAL.gold;x.fillRect(18,0,1,3);x.fillRect(17,1,3,1);
-  });
-  
-  mkSpr('banner',8,28,x=>{
-    x.fillStyle='#604020';x.fillRect(3,0,2,28);
-    x.fillStyle='#cc1111';x.fillRect(0,2,8,10);
-    x.fillStyle=PAL.gold;x.fillRect(1,3,6,8);
-    x.fillStyle='#cc1111';x.fillRect(2,4,4,4);x.fillRect(2,4,1,2);x.fillRect(5,4,1,2);
-    x.fillStyle=PAL.gold;x.fillRect(2,0,4,3);
-  });
-  
-  mkSpr('tomb',18,22,x=>{
-    x.fillStyle='#5a5a6a';x.fillRect(2,6,14,16);x.fillRect(4,2,10,6);x.fillRect(6,0,6,4);
-    x.fillStyle='#4a4a5a';x.fillRect(4,8,10,12);x.fillRect(6,4,6,6);
-    x.fillStyle='#3a3a4a';x.fillRect(6,8,6,1);x.fillRect(8,9,2,5);
-  });
-}
-
 function generateMathQuestion(){
   const allQuestions=[];
   for(let a=2;a<=9;a++){
@@ -770,8 +429,8 @@ function startMathQuiz(chest){
 
 function createVirtualKeyboard(){
   mathQuiz.keyboard.buttons=[];
-  const btnW=28,btnH=28,gap=4;
-  const startX=70,startY=135;
+  const btnW=32,btnH=32,gap=6;
+  const startX=68,startY=130;
   
   for(let i=0;i<9;i++){
     const row=Math.floor(i/3);
@@ -855,96 +514,121 @@ function checkMathAnswer(){
 
 function drawMathQuiz(){
   if(!mathQuiz.active)return;
-  $.fillStyle='rgba(0,0,0,0.88)';
+  
+  // Fondo oscuro con blur
+  $.fillStyle='rgba(10,10,20,0.95)';
   $.fillRect(0,0,W,H);
-  const pw=380,ph=240,px=(W-pw)/2,py=(H-ph)/2-10;
-  $.fillStyle='rgba(0,0,0,0.5)';
-  $.fillRect(px+4,py+4,pw,ph);
-  $.fillStyle='#f5f5f5';
+  
+  const pw=360,ph=220,px=(W-pw)/2,py=(H-ph)/2-5;
+  
+  // Panel principal con gradiente
+  const panelGrad=$.createLinearGradient(px,py,px,py+ph);
+  panelGrad.addColorStop(0,'rgba(40,40,60,0.95)');
+  panelGrad.addColorStop(1,'rgba(25,25,40,0.95)');
+  $.fillStyle=panelGrad;
   $.fillRect(px,py,pw,ph);
-  $.strokeStyle='#0066cc';
-  $.lineWidth=5;
-  $.strokeRect(px,py,pw,ph);
-  $.strokeStyle='#004499';
+  
+  // Borde brillante
+  $.strokeStyle='#4a90d9';
   $.lineWidth=2;
-  $.strokeRect(px+2,py+2,pw-4,ph-4);
-  $.font='bold 18px Arial';
-  $.fillStyle='#0066cc';
+  $.strokeRect(px,py,pw,ph);
+  
+  // Título
+  $.font='bold 18px "Segoe UI", Arial';
+  $.fillStyle='#4a90d9';
   $.textAlign='center';
-  $.fillText('🔒 COFRE BLOQUEADO',W/2,py+25);
-  $.font='12px Arial';
-  $.fillStyle='#444';
-  $.fillText('Resuelve la multiplicación para abrirlo:',W/2,py+45);
-  $.font='bold 36px Arial';
-  $.fillStyle='#222';
-  $.fillText(mathQuiz.question,W/2,py+85);
-  const inputW=140,inputH=40,inputX=(W-inputW)/2,inputY=py+100;
-  $.fillStyle='rgba(0,0,0,0.2)';
-  $.fillRect(inputX+2,inputY+2,inputW,inputH);
+  $.fillText('🔒 COFRE BLOQUEADO',W/2,py+28);
+  
+  $.font='13px "Segoe UI", Arial';
+  $.fillStyle='#aaa';
+  $.fillText('Resuelve la multiplicación para abrirlo:',W/2,py+48);
+  
+  // Pregunta
+  $.font='bold 34px "Segoe UI", Arial';
   $.fillStyle='#fff';
+  $.fillText(mathQuiz.question,W/2,py+88);
+  
+  // Input
+  const inputW=140,inputH=40,inputX=(W-inputW)/2,inputY=py+100;
+  $.fillStyle='rgba(0,0,0,0.4)';
+  $.fillRect(inputX+2,inputY+2,inputW,inputH);
+  $.fillStyle='rgba(255,255,255,0.95)';
   $.fillRect(inputX,inputY,inputW,inputH);
-  $.strokeStyle='#0066cc';
-  $.lineWidth=3;
+  $.strokeStyle='#4a90d9';
+  $.lineWidth=2;
   $.strokeRect(inputX,inputY,inputW,inputH);
-  $.font='bold 32px Arial';
-  $.fillStyle='#000';
+  
+  $.font='bold 28px "Segoe UI", Arial';
+  $.fillStyle='#222';
   const displayText=mathQuiz.input+(Math.floor(Date.now()/500)%2==0?'_':'');
-  $.fillText(displayText,W/2,inputY+30);
+  $.fillText(displayText,W/2,inputY+29);
 
+  // Teclado virtual
   for(const btn of mathQuiz.keyboard.buttons){
     const isHovered=mathQuiz.keyboard.hoveredBtn===btn;
     const isCheck=btn.value==='check';
     const isBack=btn.value==='back';
+    
     $.fillStyle='rgba(0,0,0,0.3)';
     $.fillRect(btn.x+2,btn.y+2,btn.w,btn.h);
+    
     if(isCheck){
-      $.fillStyle=isHovered?'#00cc00':'#00aa00';
+      const btnGrad=$.createLinearGradient(btn.x,btn.y,btn.x,btn.y+btn.h);
+      btnGrad.addColorStop(0,isHovered?'#4caf50':'#388e3c');
+      btnGrad.addColorStop(1,isHovered?'#66bb6a':'#4caf50');
+      $.fillStyle=btnGrad;
     }else if(isBack){
-      $.fillStyle=isHovered?'#ff8800':'#ff6600';
+      const btnGrad=$.createLinearGradient(btn.x,btn.y,btn.x,btn.y+btn.h);
+      btnGrad.addColorStop(0,isHovered?'#ff9800':'#f57c00');
+      btnGrad.addColorStop(1,isHovered?'#ffb74d':'#ff9800');
+      $.fillStyle=btnGrad;
     }else{
-      $.fillStyle=isHovered?'#0088ff':'#0066cc';
+      const btnGrad=$.createLinearGradient(btn.x,btn.y,btn.x,btn.y+btn.h);
+      btnGrad.addColorStop(0,isHovered?'#42a5f5':'#1976d2');
+      btnGrad.addColorStop(1,isHovered?'#64b5f6':'#42a5f5');
+      $.fillStyle=btnGrad;
     }
+    
     $.fillRect(btn.x,btn.y,btn.w,btn.h);
-    $.strokeStyle=isHovered?'#fff':'rgba(0,0,0,0.3)';
-    $.lineWidth=2;
+    
+    $.strokeStyle=isHovered?'#fff':'rgba(255,255,255,0.3)';
+    $.lineWidth=1;
     $.strokeRect(btn.x,btn.y,btn.w,btn.h);
-    if(isHovered){
-      $.fillStyle='rgba(255,255,255,0.2)';
-      $.fillRect(btn.x,btn.y,btn.w,btn.h/2);
-    }
-    $.font=isCheck?'bold 20px Arial':'bold 18px Arial';
+    
+    $.font=isCheck?'bold 18px "Segoe UI", Arial':'bold 16px "Segoe UI", Arial';
     $.fillStyle='#fff';
     $.textAlign='center';
-    $.fillText(btn.label,btn.x+btn.w/2,btn.y+btn.h/2+7);
+    $.fillText(btn.label,btn.x+btn.w/2,btn.y+btn.h/2+6);
   }
 
-  $.font='10px Arial';
-  $.fillStyle='#666';
+  $.font='10px "Segoe UI", Arial';
+  $.fillStyle='#777';
   $.textAlign='center';
   $.fillText('Usa el teclado virtual o el teclado de tu dispositivo',W/2,py+ph-8);
 
+  // Resultado
   if(mathQuiz.showResult>0){
-    $.fillStyle='rgba(0,0,0,0.75)';
-    $.fillRect(px+15,py+60,pw-30,120);
-    $.font='bold 32px Arial';
+    $.fillStyle='rgba(0,0,0,0.85)';
+    $.fillRect(px+15,py+55,pw-30,115);
+    
+    $.font='bold 28px "Segoe UI", Arial';
     if(mathQuiz.correct){
-      $.fillStyle='#00ff00';
-      $.fillText('¡CORRECTO!',W/2,py+110);
-      $.font='bold 20px Arial';
-      $.fillStyle='#88ff88';
-      $.fillText('✓ Cofre abierto',W/2,py+145);
+      $.fillStyle='#4caf50';
+      $.fillText('¡CORRECTO!',W/2,py+105);
+      $.font='bold 18px "Segoe UI", Arial';
+      $.fillStyle='#81c784';
+      $.fillText('✓ Cofre abierto',W/2,py+135);
     }else{
-      $.fillStyle='#ff4444';
-      $.fillText('✗ INCORRECTO',W/2,py+110);
-      $.font='bold 18px Arial';
-      $.fillStyle='#ffaaaa';
-      $.fillText('Intenta de nuevo...',W/2,py+145);
+      $.fillStyle='#ef5350';
+      $.fillText('✗ INCORRECTO',W/2,py+105);
+      $.font='16px "Segoe UI", Arial';
+      $.fillStyle='#ef9a9a';
+      $.fillText('Intenta de nuevo...',W/2,py+135);
     }
   }
   $.textAlign='left';
 }
 
-// ARREGLADO: Sistema de transición de nivel simplificado
 function startNextLevel(){
   if(isTransitioning)return;
   isTransitioning=true;
@@ -984,7 +668,7 @@ function genLevel(){
   const levelConfig={
     1:{
       groundColor:PAL.grass,
-      bgGradient:['#030610','#0a1530','#15254a','#1a3060'],
+      bgGradient:['#0d1b2a','#1b263b','#2d3a4a','#3d4f5f'],
       enemyTypes:['skeleton','bat'],
       enemyCount:25,
       platformHeight:[155,115,75],
@@ -992,8 +676,8 @@ function genLevel(){
       bossX:4200
     },
     2:{
-      groundColor:'#c2b280',
-      bgGradient:['#2a1810','#4a3020','#6a4830','#8a6040'],
+      groundColor:'#d4c4a0',
+      bgGradient:['#2d1f16','#4a3428','#6b4a3a','#8a6048'],
       enemyTypes:['skeleton','ghost','bat'],
       enemyCount:20,
       platformHeight:[150,110,70],
@@ -1069,7 +753,8 @@ function mkE(x,y,type){
 function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
 
 function update(){
-  // ARREGLADO: Manejar transición de nivel primero
+  if(damageCooldown>0)damageCooldown--;
+
   if(isTransitioning){
     levelTransitionTimer--;
     if(levelTransitionTimer<=0){
@@ -1233,7 +918,7 @@ function update(){
     }
   }
 
-  // ARREGLADO: Sistema de proyectiles simplificado
+  // Proyectiles
   for(let i=projectiles.length-1;i>=0;i--){
     const pr=projectiles[i];
     pr.x+=pr.vx;
@@ -1251,7 +936,7 @@ function update(){
         const e=enemies[j];
         if(!e.dead&&e.active&&overlap(pr,e)){
           e.hp-=(pr.damage||1);
-          spawnParts(pr.x,pr.y,5,'#ff0');
+          spawnParts(pr.x,pr.y,5,'#ffeb3b');
           hit=true;
           
           if(e.hp<=0){
@@ -1261,9 +946,8 @@ function update(){
             else if(e.type==='wyvern')score+=300;
             else score+=100;
             
-            spawnParts(e.x+e.w/2,e.y+e.h/2,15,'#ff4040');
+            spawnParts(e.x+e.w/2,e.y+e.h/2,15,'#ef5350');
             
-            // ARREGLADO: Lógica de cambio de nivel simplificada
             if((e.type==='boabdil' || e.type==='wyvern') && currentLevel<maxLevels){
               currentLevel++;
               startNextLevel();
@@ -1401,7 +1085,11 @@ function update(){
         }
         break;
     }
-    if(!P.dead&&P.invuln<=0&&!e.dead&&overlap(e,P))pHit();
+    
+    if(!P.dead&&damageCooldown<=0&&!e.dead&&overlap(e,P)){
+      pHit();
+      damageCooldown=DAMAGE_COOLDOWN_TIME;
+    }
   }
 
   for(const pk of pickups){
@@ -1450,7 +1138,7 @@ function pDeath(){
   lives--;
   sfxDeath();
   shake=10;
-  spawnParts(P.x+8,P.y+14,20,'#ff3030');
+  spawnParts(P.x+8,P.y+14,20,'#ef5350');
 }
 
 function respawn(){
@@ -1461,6 +1149,7 @@ function respawn(){
   P.vy=0;
   P.invuln=120;
   armorOn=true;
+  damageCooldown=0;
 }
 
 function spawnPk(x,y,type){
@@ -1487,9 +1176,32 @@ function spawnParts(x,y,n,col){
   }
 }
 
+// ============ DIBUJO MODERNO ============
+
+function drawRoundedRect(x,y,w,h,r){
+  $.beginPath();
+  $.moveTo(x+r,y);
+  $.lineTo(x+w-r,y);
+  $.quadraticCurveTo(x+w,y,x+w,y+r);
+  $.lineTo(x+w,y+h-r);
+  $.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  $.lineTo(x+r,y+h);
+  $.quadraticCurveTo(x,y+h,x,y+h-r);
+  $.lineTo(x,y+r);
+  $.quadraticCurveTo(x,y,x+r,y);
+  $.closePath();
+}
+
+function drawCircle(x,y,r){
+  $.beginPath();
+  $.arc(x,y,r,0,Math.PI*2);
+  $.closePath();
+}
+
 function draw(){
-  $.fillStyle='#000';
+  $.fillStyle='#0a0a14';
   $.fillRect(0,0,W,H);
+  
   if(state==='menu'){drawMenu();return;}
   if(state==='story'){drawStory();return;}
   if(state==='gameover'){drawGO();return;}
@@ -1518,17 +1230,16 @@ function draw(){
     $.fillRect(0,0,W,H);
   }
   
-  // ARREGLADO: Mostrar mensaje de transición
   if(isTransitioning){
-    $.fillStyle='rgba(0,0,0,0.7)';
+    $.fillStyle='rgba(0,0,0,0.8)';
     $.fillRect(0,0,W,H);
-    $.font='bold 20px Arial';
+    $.font='bold 22px "Segoe UI", Arial';
     $.fillStyle='#ffd700';
     $.textAlign='center';
     $.fillText('¡NIVEL COMPLETADO!',W/2,H/2);
-    $.font='14px Arial';
-    $.fillStyle='#fff';
-    $.fillText('Cargando siguiente nivel...',W/2,H/2+30);
+    $.font='14px "Segoe UI", Arial';
+    $.fillStyle='#aaa';
+    $.fillText('Cargando siguiente nivel...',W/2,H/2+32);
     $.textAlign='left';
   }
   
@@ -1539,68 +1250,76 @@ function draw(){
 }
 
 function drawBg(){
+  // Gradiente de cielo
   const g=$.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#030610');
-  g.addColorStop(0.3,'#0a1530');
-  g.addColorStop(0.6,'#15254a');
-  g.addColorStop(1,'#1a3060');
+  g.addColorStop(0,'#0d1b2a');
+  g.addColorStop(0.4,'#1b263b');
+  g.addColorStop(0.7,'#2d3a4a');
+  g.addColorStop(1,'#3d4f5f');
   $.fillStyle=g;
   $.fillRect(0,0,W,H);
   
-  for(let i=0;i<50;i++){
-    const sx=((i*137+42)%W+camX*0.015)%W;
-    const sy=((i*97+126)%140);
-    const b=0.3+((i*73)%100)/100*0.7;
-    const tw=Math.sin(frame*0.025+i)*0.3+0.7;
-    $.fillStyle=`rgba(255,255,255,${b*tw})`;
-    $.fillRect(sx,sy,(i%3===0)?2:1,(i%3===0)?2:1);
+  // Estrellas suaves
+  for(let i=0;i<40;i++){
+    const sx=((i*137+42)%W+camX*0.01)%W;
+    const sy=((i*97+126)%130);
+    const b=0.4+((i*73)%100)/100*0.6;
+    const tw=Math.sin(frame*0.02+i)*0.2+0.8;
+    $.fillStyle=`rgba(255,255,255,${b*tw*0.8})`;
+    drawCircle(sx,sy,(i%4===0)?1.5:1);
+    $.fill();
   }
   
-  const mx=W*0.82-camX*0.008,my=35;
-  const mg=$.createRadialGradient(mx,my,8,mx,my,45);
-  mg.addColorStop(0,'rgba(254,243,199,0.18)');
-  mg.addColorStop(1,'rgba(254,243,199,0)');
+  // Luna con glow suave
+  const mx=W*0.82-camX*0.005,my=35;
+  const mg=$.createRadialGradient(mx,my,10,mx,my,50);
+  mg.addColorStop(0,'rgba(255,250,220,0.2)');
+  mg.addColorStop(1,'rgba(255,250,220,0)');
   $.fillStyle=mg;
-  $.beginPath();
-  $.arc(mx,my,45,0,Math.PI*2);
+  drawCircle(mx,my,50);
   $.fill();
-  $.fillStyle='#fef3c7';
-  $.beginPath();
-  $.arc(mx,my,14,0,Math.PI*2);
+  
+  $.fillStyle='#fff8dc';
+  drawCircle(mx,my,16);
   $.fill();
-  $.fillStyle='#f0dfa0';
-  $.beginPath();
-  $.arc(mx-2,my-1,12,0,Math.PI*2);
+  $.fillStyle='#f5f5dc';
+  drawCircle(mx-2,my-1,14);
   $.fill();
 
-  $.fillStyle='#080e22';
-  for(let i=0;i<14;i++){
-    const bx=i*110-(camX*0.04)%110;
-    const bh=35+((i*71)%35);
-    drawMtn(bx,H-55,110,bh);
+  // Montañas con parallax
+  $.fillStyle='#0f1419';
+  for(let i=0;i<12;i++){
+    const bx=i*120-(camX*0.03)%120;
+    const bh=30+((i*71)%35);
+    drawMtn(bx,H-55,120,bh);
   }
-  $.fillStyle='#0c1630';
-  for(let i=0;i<11;i++){
-    const bx=i*140-(camX*0.08)%140;
-    const bh=25+((i*53)%22);
-    drawMtn(bx,H-45,140,bh);
+  $.fillStyle='#141a22';
+  for(let i=0;i<10;i++){
+    const bx=i*150-(camX*0.06)%150;
+    const bh=22+((i*53)%22);
+    drawMtn(bx,H-48,150,bh);
   }
-  $.fillStyle='#101e38';
-  for(let i=0;i<9;i++){
-    const bx=i*170-(camX*0.15)%170;
-    const bh=20+((i*37)%18);
-    drawMtn(bx,H-35,170,bh);
+  $.fillStyle='#1a202a';
+  for(let i=0;i<8;i++){
+    const bx=i*180-(camX*0.12)%180;
+    const bh=18+((i*37)%18);
+    drawMtn(bx,H-38,180,bh);
   }
-  $.fillStyle='rgba(20,40,80,0.12)';
-  $.fillRect(0,H-70,W,25);
+  
+  // Niebla suave
+  const fogGrad=$.createLinearGradient(0,H-80,0,H);
+  fogGrad.addColorStop(0,'rgba(20,30,45,0)');
+  fogGrad.addColorStop(1,'rgba(20,30,45,0.3)');
+  $.fillStyle=fogGrad;
+  $.fillRect(0,H-80,W,80);
 }
 
 function drawMtn(x,by,w,h){
   $.beginPath();
   $.moveTo(x,by);
-  $.lineTo(x+w*0.3,by-h*0.7);
-  $.lineTo(x+w*0.45,by-h);
-  $.lineTo(x+w*0.65,by-h*0.65);
+  $.lineTo(x+w*0.25,by-h*0.65);
+  $.lineTo(x+w*0.5,by-h);
+  $.lineTo(x+w*0.75,by-h*0.6);
   $.lineTo(x+w,by);
   $.fill();
 }
@@ -1609,103 +1328,334 @@ function drawPlats(){
   for(const p of platforms){
     if(p.x+p.w<camX-20||p.x>camX+W+20)continue;
     if(p.type==='ground'){
-      $.fillStyle=PAL.dirt;
+      // Tierra con gradiente
+      const dirtGrad=$.createLinearGradient(p.x,p.y,p.x,p.y+p.h);
+      dirtGrad.addColorStop(0,PAL.dirt);
+      dirtGrad.addColorStop(1,PAL.dirtDark);
+      $.fillStyle=dirtGrad;
       $.fillRect(p.x,p.y,p.w,p.h);
-      $.fillStyle=PAL.dirtDark;
-      $.fillRect(p.x,p.y+8,p.w,p.h-8);
-      $.fillStyle=PAL.grass;
-      $.fillRect(p.x,p.y,p.w,5);
-      $.fillStyle=PAL.grassLight;
-      $.fillRect(p.x,p.y,p.w,2);
-      for(let gx=p.x;gx<p.x+p.w;gx+=7){
+      
+      // Hierba con gradiente
+      const grassGrad=$.createLinearGradient(p.x,p.y,p.x,p.y+6);
+      grassGrad.addColorStop(0,PAL.grassLight);
+      grassGrad.addColorStop(1,PAL.grass);
+      $.fillStyle=grassGrad;
+      $.fillRect(p.x,p.y,p.w,6);
+      
+      // Detalles de hierba
+      for(let gx=p.x;gx<p.x+p.w;gx+=8){
         const gh=2+((gx*7)%3);
         $.fillStyle=PAL.grassLight;
         $.fillRect(gx,p.y-gh,2,gh);
       }
-      $.fillStyle='rgba(0,0,0,0.08)';
-      for(let dx=p.x;dx<p.x+p.w;dx+=11){
-        for(let dy=p.y+7;dy<p.y+p.h;dy+=9){
-          $.fillRect(dx+((dy*3)%7),dy,2,2);
-        }
-      }
     }else if(p.type==='float'){
-      $.fillStyle=PAL.stone;
-      $.fillRect(p.x,p.y,p.w,p.h);
-      $.fillStyle=PAL.stoneLight;
-      $.fillRect(p.x,p.y,p.w,3);
-      $.fillStyle=PAL.stoneDark;
-      $.fillRect(p.x,p.y+p.h-3,p.w,3);
-      $.fillStyle='rgba(60,140,40,0.3)';
-      $.fillRect(p.x+2,p.y,3,2);
-      $.fillRect(p.x+p.w-6,p.y,4,2);
-    }else if(p.type==='bridge'){
-      $.fillStyle='#6a4a2a';
-      $.fillRect(p.x,p.y,p.w,p.h);
-      $.fillStyle='#8a6a3a';
-      $.fillRect(p.x,p.y,p.w,3);
+      // Plataforma flotante con bordes redondeados
+      const stoneGrad=$.createLinearGradient(p.x,p.y,p.x,p.y+p.h);
+      stoneGrad.addColorStop(0,PAL.stoneLight);
+      stoneGrad.addColorStop(1,PAL.stoneDark);
+      $.fillStyle=stoneGrad;
+      drawRoundedRect(p.x,p.y,p.w,p.h,3);
+      $.fill();
+      
+      // Musgo
+      $.fillStyle='rgba(76,175,80,0.4)';
+      $.fillRect(p.x+3,p.y,4,2);
+      $.fillRect(p.x+p.w-8,p.y,5,2);
     }
   }
 }
 
 function drawDeco(){
   for(const d of decorations){
-    if(d.x<camX-40||d.x>camX+W+40)continue;
-    if(SC[d.type])$.drawImage(SC[d.type],d.x,d.y);
+    if(d.x<camX-50||d.x>camX+W+50)continue;
+    drawTent(d.x,d.y);
   }
+}
+
+function drawTent(x,y){
+  // Tienda de campaña moderna
+  const tentGrad=$.createLinearGradient(x,y+8,x,y+28);
+  tentGrad.addColorStop(0,'#c9b896');
+  tentGrad.addColorStop(1,'#a08060');
+  
+  $.fillStyle=tentGrad;
+  $.beginPath();
+  $.moveTo(x,y+28);
+  $.lineTo(x+4,y+8);
+  $.lineTo(x+16,y);
+  $.lineTo(x+28,y+8);
+  $.lineTo(x+32,y+28);
+  $.closePath();
+  $.fill();
+  
+  // Interior oscuro
+  $.fillStyle='#3d2817';
+  $.beginPath();
+  $.moveTo(x+12,y+28);
+  $.lineTo(x+14,y+14);
+  $.lineTo(x+18,y+14);
+  $.lineTo(x+20,y+28);
+  $.closePath();
+  $.fill();
+  
+  // Bandera
+  $.fillStyle='#8b4513';
+  $.fillRect(x+15,y-8,2,10);
+  $.fillStyle='#c62828';
+  $.fillRect(x+17,y-6,8,5);
+  $.fillStyle='#ffd700';
+  $.fillRect(x+19,y-5,2,2);
 }
 
 function drawChests(){
   for(const c of chests){
-    if(c.x<camX-20||c.x>camX+W+20)continue;
-    $.drawImage(SC[c.open?'ch1':'ch0'],c.x,c.y);
+    if(c.x<camX-30||c.x>camX+W+30)continue;
+    
+    if(!c.open){
+      // Glow dorado suave
+      const glowGrad=$.createRadialGradient(c.x+8,c.y+7,2,c.x+8,c.y+7,15);
+      glowGrad.addColorStop(0,'rgba(255,215,0,0.3)');
+      glowGrad.addColorStop(1,'rgba(255,215,0,0)');
+      $.fillStyle=glowGrad;
+      drawCircle(c.x+8,c.y+7,15);
+      $.fill();
+      
+      drawChestClosed(c.x,c.y);
+    }else{
+      drawChestOpen(c.x,c.y);
+    }
   }
+}
+
+function drawChestClosed(x,y){
+  // Base
+  const chestGrad=$.createLinearGradient(x,y+4,x,y+14);
+  chestGrad.addColorStop(0,'#8b6914');
+  chestGrad.addColorStop(1,'#5a4510');
+  $.fillStyle=chestGrad;
+  drawRoundedRect(x+1,y+4,14,10,2);
+  $.fill();
+  
+  // Tapa
+  const lidGrad=$.createLinearGradient(x,y,x,y+5);
+  lidGrad.addColorStop(0,'#a08030');
+  lidGrad.addColorStop(1,'#6b5010');
+  $.fillStyle=lidGrad;
+  drawRoundedRect(x,y,16,5,2);
+  $.fill();
+  
+  // Cerradura dorada
+  $.fillStyle='#ffd700';
+  drawCircle(x+8,y+5,3);
+  $.fill();
+  $.fillStyle='#b8860b';
+  drawCircle(x+8,y+5,2);
+  $.fill();
+}
+
+function drawChestOpen(x,y){
+  // Base
+  const chestGrad=$.createLinearGradient(x,y+6,x,y+14);
+  chestGrad.addColorStop(0,'#8b6914');
+  chestGrad.addColorStop(1,'#5a4510');
+  $.fillStyle=chestGrad;
+  drawRoundedRect(x+1,y+6,14,8,2);
+  $.fill();
+  
+  // Tapa abierta
+  const lidGrad=$.createLinearGradient(x,y-2,x,y+4);
+  lidGrad.addColorStop(0,'#a08030');
+  lidGrad.addColorStop(1,'#6b5010');
+  $.fillStyle=lidGrad;
+  $.beginPath();
+  $.moveTo(x,y+4);
+  $.lineTo(x+2,y-2);
+  $.lineTo(x+14,y-2);
+  $.lineTo(x+16,y+4);
+  $.closePath();
+  $.fill();
+  
+  // Brillo interior
+  $.fillStyle='rgba(255,215,0,0.6)';
+  $.fillRect(x+4,y+6,8,4);
 }
 
 function drawPks(){
   for(const pk of pickups){
-    if(pk.x<camX-20||pk.x>camX+W+20)continue;
+    if(pk.x<camX-30||pk.x>camX+W+30)continue;
     const dy=pk.dy||pk.y;
-    const s=pk.type==='heart'?'heart':pk.type==='armor'?'armor_pk':pk.type==='scroll'?'scroll':'coin';
-    $.fillStyle='rgba(255,215,0,0.12)';
-    $.beginPath();
-    $.arc(pk.x+6,dy+6,10,0,Math.PI*2);
+    
+    // Glow suave
+    const glowGrad=$.createRadialGradient(pk.x+6,dy+6,2,pk.x+6,dy+6,12);
+    glowGrad.addColorStop(0,'rgba(255,215,0,0.25)');
+    glowGrad.addColorStop(1,'rgba(255,215,0,0)');
+    $.fillStyle=glowGrad;
+    drawCircle(pk.x+6,dy+6,12);
     $.fill();
-    $.drawImage(SC[s],pk.x,dy);
+    
+    switch(pk.type){
+      case 'heart':drawHeart(pk.x+2,dy+2,8);break;
+      case 'armor':drawArmorPickup(pk.x+3,dy+3);break;
+      case 'coin':drawCoin(pk.x+3,dy+2);break;
+      case 'scroll':drawScroll(pk.x+4,dy+2);break;
+      case 'axe':drawAxePickup(pk.x+2,dy+2);break;
+      case 'fireball':drawFireballPickup(pk.x+2,dy+2);break;
+    }
   }
+}
+
+function drawHeart(x,y,s){
+  const heartGrad=$.createLinearGradient(x,y,x,y+s);
+  heartGrad.addColorStop(0,'#ff5252');
+  heartGrad.addColorStop(1,'#c62828');
+  $.fillStyle=heartGrad;
+  
+  $.beginPath();
+  $.moveTo(x+s/2,y+s*0.2);
+  $.bezierCurveTo(x,y,x,y+s*0.5,x+s/2,y+s);
+  $.bezierCurveTo(x+s,y+s*0.5,x+s,y,x+s/2,y+s*0.2);
+  $.fill();
+  
+  // Brillo
+  $.fillStyle='rgba(255,255,255,0.4)';
+  drawCircle(x+s*0.3,y+s*0.35,s*0.15);
+  $.fill();
+}
+
+function drawArmorPickup(x,y){
+  const armorGrad=$.createLinearGradient(x,y,x,y+10);
+  armorGrad.addColorStop(0,PAL.armorLight);
+  armorGrad.addColorStop(1,PAL.armorDark);
+  $.fillStyle=armorGrad;
+  $.fillRect(x+2,y,6,4);
+  $.fillRect(x+1,y+4,8,5);
+  $.fillRect(x+3,y+9,4,3);
+  
+  $.fillStyle='#c62828';
+  $.fillRect(x+4,y+5,2,2);
+}
+
+function drawCoin(x,y){
+  const coinGrad=$.createLinearGradient(x,y,x,y+10);
+  coinGrad.addColorStop(0,'#ffd700');
+  coinGrad.addColorStop(0.5,'#ffec8b');
+  coinGrad.addColorStop(1,'#daa520');
+  $.fillStyle=coinGrad;
+  drawCircle(x+4,y+5,5);
+  $.fill();
+  
+  $.strokeStyle='#b8860b';
+  $.lineWidth=1;
+  drawCircle(x+4,y+5,5);
+  $.stroke();
+  
+  $.fillStyle='#b8860b';
+  $.font='bold 8px Arial';
+  $.textAlign='center';
+  $.fillText('$',x+4,y+8);
+}
+
+function drawScroll(x,y){
+  const scrollGrad=$.createLinearGradient(x,y,x,y+10);
+  scrollGrad.addColorStop(0,'#f5deb3');
+  scrollGrad.addColorStop(1,'#d2b48c');
+  $.fillStyle=scrollGrad;
+  $.fillRect(x+1,y+2,6,8);
+  
+  $.fillStyle='#8b4513';
+  $.fillRect(x,y,8,2);
+  $.fillRect(x,y+10,8,2);
+  
+  $.fillStyle='#c62828';
+  $.fillRect(x+3,y+7,2,2);
+}
+
+function drawAxePickup(x,y){
+  $.fillStyle='#8b4513';
+  $.fillRect(x+2,y+5,8,2);
+  $.fillStyle='#c0c0c0';
+  $.fillRect(x+7,y,3,6);
+  $.fillStyle='#ff6b6b';
+  $.fillRect(x+8,y-1,3,3);
+}
+
+function drawFireballPickup(x,y){
+  const fireGrad=$.createRadialGradient(x+5,y+5,1,x+5,y+5,5);
+  fireGrad.addColorStop(0,'#ffff00');
+  fireGrad.addColorStop(0.5,'#ff7043');
+  fireGrad.addColorStop(1,'#c62828');
+  $.fillStyle=fireGrad;
+  drawCircle(x+5,y+5,5);
+  $.fill();
 }
 
 function drawProjs(){
   for(const pr of projectiles){
     if(pr.player){
-      $.save();
-      $.translate(pr.x,pr.y);
-      if(pr.vx<0){
-        $.scale(-1,1);
-        $.translate(-pr.w,0);
-      }
       if(pr.weapon==='axe'){
-        $.drawImage(SC['axe'],0,0);
-        $.strokeStyle='#ff6666';
+        // Hacha girando
+        $.save();
+        $.translate(pr.x+10,pr.y+6);
+        $.rotate(frame*0.3);
+        
+        const axeGrad=$.createLinearGradient(-5,-6,5,6);
+        axeGrad.addColorStop(0,'#c0c0c0');
+        axeGrad.addColorStop(1,'#808080');
+        $.fillStyle=axeGrad;
+        $.fillRect(-2,-6,4,8);
+        
+        $.fillStyle='#ff5252';
+        $.fillRect(-4,-8,8,4);
+        
+        $.strokeStyle='rgba(255,100,100,0.5)';
         $.lineWidth=2;
-        $.beginPath();
-        $.arc(pr.w/2,pr.h/2,8,0,Math.PI*2);
+        drawCircle(0,0,10);
         $.stroke();
+        
+        $.restore();
       }else if(pr.weapon==='fireball'){
-        $.drawImage(SC['fireball'],0,0);
-        $.fillStyle='rgba(255,100,0,0.3)';
-        $.fillRect(-5,2,5,pr.h-4);
+        // Bola de fuego
+        const fireGrad=$.createRadialGradient(pr.x+7,pr.y+7,2,pr.x+7,pr.y+7,8);
+        fireGrad.addColorStop(0,'#ffff00');
+        fireGrad.addColorStop(0.4,'#ff7043');
+        fireGrad.addColorStop(1,'rgba(198,40,40,0)');
+        $.fillStyle=fireGrad;
+        drawCircle(pr.x+7,pr.y+7,8);
+        $.fill();
+        
+        // Cola de fuego
+        $.fillStyle='rgba(255,112,67,0.4)';
+        for(let i=0;i<5;i++){
+          drawCircle(pr.x-3-i*2,pr.y+7+Math.sin(frame*0.5+i)*2,3-i*0.4);
+          $.fill();
+        }
       }else{
-        $.drawImage(SC['lance'],0,0);
+        // Lanza
+        const lanceGrad=$.createLinearGradient(pr.x,pr.y+3,pr.x+16,pr.y+3);
+        lanceGrad.addColorStop(0,'#8b4513');
+        lanceGrad.addColorStop(1,'#a0522d');
+        $.fillStyle=lanceGrad;
+        $.fillRect(pr.x,pr.y+2,10,3);
+        
+        const tipGrad=$.createLinearGradient(pr.x+10,pr.y,pr.x+16,pr.y+6);
+        tipGrad.addColorStop(0,'#e0e0e0');
+        tipGrad.addColorStop(1,'#a0a0a0');
+        $.fillStyle=tipGrad;
+        $.beginPath();
+        $.moveTo(pr.x+10,pr.y+1);
+        $.lineTo(pr.x+16,pr.y+3.5);
+        $.lineTo(pr.x+10,pr.y+6);
+        $.closePath();
+        $.fill();
       }
-      $.restore();
     }else{
-      $.fillStyle='#ff4020';
-      $.beginPath();
-      $.arc(pr.x+3,pr.y+3,3.5,0,Math.PI*2);
-      $.fill();
-      $.fillStyle='#ffaa00';
-      $.beginPath();
-      $.arc(pr.x+3,pr.y+3,1.5,0,Math.PI*2);
+      // Proyectil enemigo
+      const enemyProjGrad=$.createRadialGradient(pr.x+3,pr.y+3,1,pr.x+3,pr.y+3,5);
+      enemyProjGrad.addColorStop(0,'#ffeb3b');
+      enemyProjGrad.addColorStop(0.5,'#ff5722');
+      enemyProjGrad.addColorStop(1,'rgba(198,40,40,0)');
+      $.fillStyle=enemyProjGrad;
+      drawCircle(pr.x+3,pr.y+3,5);
       $.fill();
     }
   }
@@ -1713,247 +1663,739 @@ function drawProjs(){
 
 function drawEns(){
   for(const e of enemies){
-    if(e.dead||!e.active||e.x+e.w<camX-30||e.x>camX+W+30)continue;
-    $.save();
-    const fl=e.dir<0;
+    if(e.dead||!e.active||e.x+e.w<camX-40||e.x>camX+W+40)continue;
+    
     switch(e.type){
-      case 'skeleton':{
-        const fr=Math.floor(e.anim/12)%2;
-        if(fl){
-          $.translate(e.x+e.w,e.y);
-          $.scale(-1,1);
-        }else{
-          $.translate(e.x,e.y);
-        }
-        $.drawImage(SC['sk'+fr],0,0);
-        break;
-      }
-      case 'ghost':{
-        const fr=Math.floor(e.anim/10)%2;
-        $.fillStyle='rgba(30,100,180,0.08)';
-        $.beginPath();
-        $.arc(e.x+12,e.y+12,20,0,Math.PI*2);
-        $.fill();
-        if(fl){
-          $.translate(e.x+e.w,e.y);
-          $.scale(-1,1);
-        }else{
-          $.translate(e.x,e.y);
-        }
-        $.drawImage(SC['gh'+fr],0,0);
-        break;
-      }
-      case 'bat':{
-        const fr=Math.floor(e.anim/6)%2;
-        $.translate(e.x,e.y);
-        $.drawImage(SC['bt'+fr],0,0);
-        break;
-      }
-      case 'wyvern':{
-        const fr=e.shootTimer>150?1:0;
-        if(fl){
-          $.translate(e.x+e.w,e.y);
-          $.scale(-1,1);
-        }else{
-          $.translate(e.x,e.y);
-        }
-        $.drawImage(SC['wv'+fr],0,0);
-        $.restore();
-        $.save();
-        const bx=e.x,by=e.y-10;
-        $.fillStyle='rgba(0,0,0,0.7)';
-        $.fillRect(bx,by,32,5);
-        $.fillStyle='#300';
-        $.fillRect(bx+1,by+1,30,3);
-        $.fillStyle='#ff4400';
-        $.fillRect(bx+1,by+1,30*(e.hp/5),3);
-        break;
-      }
-      case 'boabdil':{
-        if(fl){
-          $.translate(e.x+e.w,e.y);
-          $.scale(-1,1);
-        }else{
-          $.translate(e.x,e.y);
-        }
-        $.drawImage(SC['boabdil'],0,0);
-        $.restore();
-        $.save();
-        const bx=e.x,by=e.y-14;
-        $.fillStyle='rgba(0,0,0,0.7)';
-        $.fillRect(bx-2,by-1,54,8);
-        $.fillStyle='#300';
-        $.fillRect(bx,by,50,6);
-        $.fillStyle='#c02020';
-        $.fillRect(bx,by,50*(e.hp/20),6);
-        $.fillStyle='#ff4040';
-        $.fillRect(bx,by,50*(e.hp/20),3);
-        $.font='bold 6px Arial';
-        $.fillStyle='#fff';
-        $.textAlign='center';
-        $.fillText('REY BOABDIL',bx+25,by-3);
-        $.textAlign='left';
-        break;
-      }
+      case 'skeleton':drawSkeleton(e.x,e.y,e.dir,e.anim);break;
+      case 'ghost':drawGhost(e.x,e.y,e.dir,e.anim);break;
+      case 'bat':drawBat(e.x,e.y,e.anim);break;
+      case 'wyvern':drawWyvern(e.x,e.y,e.dir,e.shootTimer,e.hp);break;
+      case 'boabdil':drawBoabdil(e.x,e.y,e.dir,e.hp);break;
     }
-    $.restore();
   }
+}
+
+function drawSkeleton(x,y,dir,anim){
+  const walkOffset=Math.sin(anim*0.15)*2;
+  
+  // Aura oscura
+  const shadowGrad=$.createRadialGradient(x+8,y+12,5,x+8,y+12,20);
+  shadowGrad.addColorStop(0,'rgba(100,100,120,0.2)');
+  shadowGrad.addColorStop(1,'rgba(100,100,120,0)');
+  $.fillStyle=shadowGrad;
+  drawCircle(x+8,y+12,20);
+  $.fill();
+  
+  // Piernas
+  $.fillStyle='#d0d0d0';
+  $.fillRect(x+4,y+16+walkOffset,3,6);
+  $.fillRect(x+9,y+16-walkOffset,3,6);
+  
+  // Torso
+  const boneGrad=$.createLinearGradient(x+4,y+8,x+4,y+16);
+  boneGrad.addColorStop(0,'#f0f0f0');
+  boneGrad.addColorStop(1,'#c0c0c0');
+  $.fillStyle=boneGrad;
+  $.fillRect(x+4,y+8,8,8);
+  
+  // Costillas
+  $.fillStyle='#b0b0b0';
+  $.fillRect(x+5,y+10,6,1);
+  $.fillRect(x+5,y+12,6,1);
+  $.fillRect(x+5,y+14,6,1);
+  
+  // Cabeza
+  const skullGrad=$.createLinearGradient(x+5,y,x+5,y+8);
+  skullGrad.addColorStop(0,'#f5f5f5');
+  skullGrad.addColorStop(1,'#d0d0d0');
+  $.fillStyle=skullGrad;
+  drawRoundedRect(x+5,y,6,8,2);
+  $.fill();
+  
+  // Ojos rojos brillantes
+  $.fillStyle='#ff0000';
+  drawCircle(x+6.5,y+3,1.5);
+  drawCircle(x+9.5,y+3,1.5);
+  $.fill();
+  
+  // Brillo en ojos
+  $.fillStyle='#ff6666';
+  drawCircle(x+6.2,y+2.7,0.5);
+  drawCircle(x+9.2,y+2.7,0.5);
+  $.fill();
+  
+  // Brazos
+  $.fillStyle='#d0d0d0';
+  $.fillRect(x+2,y+9,2,5);
+  $.fillRect(x+12,y+9,2,5);
+}
+
+function drawGhost(x,y,dir,anim){
+  const floatY=Math.sin(anim*0.05)*3;
+  const gy=y+floatY;
+  
+  // Aura fantasmal
+  const ghostGrad=$.createRadialGradient(x+12,gy+12,5,x+12,gy+12,22);
+  ghostGrad.addColorStop(0,'rgba(144,202,249,0.4)');
+  ghostGrad.addColorStop(0.5,'rgba(144,202,249,0.2)');
+  ghostGrad.addColorStop(1,'rgba(144,202,249,0)');
+  $.fillStyle=ghostGrad;
+  drawCircle(x+12,gy+12,22);
+  $.fill();
+  
+  // Cuerpo
+  const bodyGrad=$.createLinearGradient(x+6,gy,x+6,gy+20);
+  bodyGrad.addColorStop(0,'rgba(200,230,255,0.8)');
+  bodyGrad.addColorStop(1,'rgba(144,202,249,0.4)');
+  $.fillStyle=bodyGrad;
+  
+  $.beginPath();
+  $.moveTo(x+6,gy+20);
+  $.lineTo(x+4,gy+15);
+  $.lineTo(x+6,gy+10);
+  $.lineTo(x+4,gy+5);
+  $.lineTo(x+8,gy);
+  $.lineTo(x+16,gy);
+  $.lineTo(x+20,gy+5);
+  $.lineTo(x+18,gy+10);
+  $.lineTo(x+20,gy+15);
+  $.lineTo(x+18,gy+20);
+  $.closePath();
+  $.fill();
+  
+  // Ojos
+  $.fillStyle='#1a237e';
+  drawCircle(x+9,gy+6,2.5);
+  drawCircle(x+15,gy+6,2.5);
+  $.fill();
+  
+  // Boca
+  $.fillStyle='#1a237e';
+  $.beginPath();
+  $.arc(x+12,gy+12,3,0,Math.PI);
+  $.fill();
+}
+
+function drawBat(x,y,anim){
+  const wingY=Math.sin(anim*0.2)*4;
+  
+  // Cuerpo
+  const bodyGrad=$.createLinearGradient(x+9,y+3,x+9,y+9);
+  bodyGrad.addColorStop(0,'#5a4a6a');
+  bodyGrad.addColorStop(1,'#3a2a4a');
+  $.fillStyle=bodyGrad;
+  drawEllipse(x+9,y+6,4,5);
+  $.fill();
+  
+  // Alas
+  const wingGrad=$.createLinearGradient(x,y+3,x,y+12);
+  wingGrad.addColorStop(0,'#6a5a7a');
+  wingGrad.addColorStop(1,'#4a3a5a');
+  $.fillStyle=wingGrad;
+  
+  // Ala izquierda
+  $.beginPath();
+  $.moveTo(x+6,y+5);
+  $.lineTo(x,y+3+wingY);
+  $.lineTo(x+2,y+8+wingY*0.5);
+  $.lineTo(x,y+12);
+  $.lineTo(x+6,y+8);
+  $.closePath();
+  $.fill();
+  
+  // Ala derecha
+  $.beginPath();
+  $.moveTo(x+12,y+5);
+  $.lineTo(x+18,y+3+wingY);
+  $.lineTo(x+16,y+8+wingY*0.5);
+  $.lineTo(x+18,y+12);
+  $.lineTo(x+12,y+8);
+  $.closePath();
+  $.fill();
+  
+  // Ojos
+  $.fillStyle='#ff0000';
+  drawCircle(x+8,y+4,1);
+  drawCircle(x+10,y+4,1);
+  $.fill();
+  
+  // Orejas
+  $.fillStyle='#4a3a5a';
+  $.beginPath();
+  $.moveTo(x+7,y+2);
+  $.lineTo(x+6,y-2);
+  $.lineTo(x+9,y+1);
+  $.closePath();
+  $.fill();
+  
+  $.beginPath();
+  $.moveTo(x+11,y+2);
+  $.lineTo(x+12,y-2);
+  $.lineTo(x+9,y+1);
+  $.closePath();
+  $.fill();
+}
+
+function drawEllipse(x,y,rx,ry){
+  $.beginPath();
+  $.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  $.closePath();
+}
+
+function drawWyvern(x,y,dir,shootTimer,hp){
+  // Barra de vida
+  const bx=x,by=y-12;
+  $.fillStyle='rgba(0,0,0,0.6)';
+  $.fillRect(bx,by,32,5);
+  $.fillStyle='#300';
+  $.fillRect(bx+1,by+1,30,3);
+  $.fillStyle='#ff5722';
+  $.fillRect(bx+1,by+1,30*(hp/5),3);
+  
+  // Sombra
+  const shadowGrad=$.createRadialGradient(x+16,y+25,5,x+16,y+25,18);
+  shadowGrad.addColorStop(0,'rgba(0,0,0,0.3)');
+  shadowGrad.addColorStop(1,'rgba(0,0,0,0)');
+  $.fillStyle=shadowGrad;
+  drawEllipse(x+16,y+25,18,6);
+  $.fill();
+  
+  // Cola
+  const tailGrad=$.createLinearGradient(x,y+20,x+10,y+26);
+  tailGrad.addColorStop(0,'#2e7d32');
+  tailGrad.addColorStop(1,'#1b5e20');
+  $.fillStyle=tailGrad;
+  $.beginPath();
+  $.moveTo(x+4,y+22);
+  $.lineTo(x,y+26);
+  $.lineTo(x+8,y+28);
+  $.lineTo(x+10,y+24);
+  $.closePath();
+  $.fill();
+  
+  // Cuerpo
+  const bodyGrad=$.createLinearGradient(x+10,y+10,x+10,y+24);
+  bodyGrad.addColorStop(0,'#4caf50');
+  bodyGrad.addColorStop(1,'#2e7d32');
+  $.fillStyle=bodyGrad;
+  drawEllipse(x+18,y+18,10,8);
+  $.fill();
+  
+  // Escamas
+  $.fillStyle='#66bb6a';
+  drawCircle(x+16,y+14,2);
+  drawCircle(x+20,y+16,2);
+  drawCircle(x+14,y+18,2);
+  $.fill();
+  
+  // Cuello
+  const neckGrad=$.createLinearGradient(x+22,y+4,x+22,y+12);
+  neckGrad.addColorStop(0,'#66bb6a');
+  neckGrad.addColorStop(1,'#4caf50');
+  $.fillStyle=neckGrad;
+  $.fillRect(x+24,y+4,6,10);
+  
+  // Cabeza
+  const headGrad=$.createLinearGradient(x+26,y,x+26,y+6);
+  headGrad.addColorStop(0,'#81c784');
+  headGrad.addColorStop(1,'#4caf50');
+  $.fillStyle=headGrad;
+  drawRoundedRect(x+24,y,10,7,2);
+  $.fill();
+  
+  // Cuernos
+  $.fillStyle='#5d4037';
+  $.beginPath();
+  $.moveTo(x+26,y+1);
+  $.lineTo(x+25,y-3);
+  $.lineTo(x+28,y+1);
+  $.closePath();
+  $.fill();
+  
+  $.beginPath();
+  $.moveTo(x+30,y+1);
+  $.lineTo(x+32,y-3);
+  $.lineTo(x+33,y+1);
+  $.closePath();
+  $.fill();
+  
+  // Ojos
+  $.fillStyle='#ffeb3b';
+  drawCircle(x+28,y+3,2);
+  drawCircle(x+32,y+3,2);
+  $.fill();
+  
+  $.fillStyle='#000';
+  drawCircle(x+28.5,y+3,1);
+  drawCircle(x+32.5,y+3,1);
+  $.fill();
+  
+  // Fuego si está atacando
+  if(shootTimer>150){
+    const fireGrad=$.createRadialGradient(x+34,y+4,1,x+34,y+4,8);
+    fireGrad.addColorStop(0,'#ffff00');
+    fireGrad.addColorStop(0.5,'#ff5722');
+    fireGrad.addColorStop(1,'rgba(255,87,34,0)');
+    $.fillStyle=fireGrad;
+    drawCircle(x+34,y+4,8);
+    $.fill();
+  }
+  
+  // Alas
+  const wingGrad=$.createLinearGradient(x+8,y+8,x+8,y+20);
+  wingGrad.addColorStop(0,'#388e3c');
+  wingGrad.addColorStop(1,'#1b5e20');
+  $.fillStyle=wingGrad;
+  
+  // Ala izquierda
+  $.beginPath();
+  $.moveTo(x+14,y+12);
+  $.lineTo(x+2,y+6);
+  $.lineTo(x+6,y+14);
+  $.lineTo(x+2,y+20);
+  $.lineTo(x+14,y+16);
+  $.closePath();
+  $.fill();
+  
+  // Ala derecha
+  $.beginPath();
+  $.moveTo(x+22,y+12);
+  $.lineTo(x+34,y+6);
+  $.lineTo(x+30,y+14);
+  $.lineTo(x+34,y+20);
+  $.lineTo(x+22,y+16);
+  $.closePath();
+  $.fill();
+  
+  // Garras
+  $.fillStyle='#424242';
+  $.fillRect(x+14,y+24,3,4);
+  $.fillRect(x+20,y+24,3,4);
+}
+
+function drawBoabdil(x,y,dir,hp){
+  // Barra de vida
+  const bx=x,by=y-16;
+  $.fillStyle='rgba(0,0,0,0.6)';
+  $.fillRect(bx-2,by,54,7);
+  $.fillStyle='#300';
+  $.fillRect(bx,by+1,50,5);
+  $.fillStyle='#c62828';
+  $.fillRect(bx,by+1,50*(hp/20),5);
+  $.fillStyle='#ff5252';
+  $.fillRect(bx,by+1,50*(hp/20),2);
+  
+  $.font='bold 7px "Segoe UI", Arial';
+  $.fillStyle='#fff';
+  $.textAlign='center';
+  $.fillText('REY BOABDIL',bx+25,by-2);
+  $.textAlign='left';
+  
+  // Sombra
+  const shadowGrad=$.createRadialGradient(x+24,y+44,8,x+24,y+44,28);
+  shadowGrad.addColorStop(0,'rgba(0,0,0,0.3)');
+  shadowGrad.addColorStop(1,'rgba(0,0,0,0)');
+  $.fillStyle=shadowGrad;
+  drawEllipse(x+24,y+44,28,8);
+  $.fill();
+  
+  // Túnica
+  const robeGrad=$.createLinearGradient(x+8,y+12,x+8,y+44);
+  robeGrad.addColorStop(0,'#c62828');
+  robeGrad.addColorStop(1,'#8b0000');
+  $.fillStyle=robeGrad;
+  drawRoundedRect(x+8,y+12,32,32,4);
+  $.fill();
+  
+  // Decoración dorada
+  $.fillStyle='#ffd700';
+  $.fillRect(x+22,y+16,4,20);
+  $.fillRect(x+16,y+22,16,2);
+  
+  // Pecho
+  const chestGrad=$.createLinearGradient(x+12,y+4,x+12,y+16);
+  chestGrad.addColorStop(0,'#d32f2f');
+  chestGrad.addColorStop(1,'#b71c1c');
+  $.fillStyle=chestGrad;
+  drawRoundedRect(x+12,y+4,24,14,3);
+  $.fill();
+  
+  // Brazos
+  const armGrad=$.createLinearGradient(x,y+14,x,y+30);
+  armGrad.addColorStop(0,'#8b0000');
+  armGrad.addColorStop(1,'#5a0000');
+  $.fillStyle=armGrad;
+  $.fillRect(x,y+14,10,18);
+  $.fillRect(x+38,y+14,10,18);
+  
+  // Manos
+  $.fillStyle='#f5d5b0';
+  drawCircle(x+5,y+34,4);
+  drawCircle(x+43,y+34,4);
+  $.fill();
+  
+  // Turbante
+  const turbanGrad=$.createLinearGradient(x+14,y-4,x+14,y+6);
+  turbanGrad.addColorStop(0,'#212121');
+  turbanGrad.addColorStop(1,'#000');
+  $.fillStyle=turbanGrad;
+  drawRoundedRect(x+10,y-4,28,10,3);
+  $.fill();
+  
+  // Joya en turbante
+  $.fillStyle='#ffd700';
+  drawCircle(x+24,y,3);
+  $.fill();
+  
+  // Ojos
+  $.fillStyle='#ffeb3b';
+  drawCircle(x+18,y+8,3);
+  drawCircle(x+30,y+8,3);
+  $.fill();
+  
+  $.fillStyle='#c62828';
+  drawCircle(x+18.5,y+8.5,1.5);
+  drawCircle(x+30.5,y+8.5,1.5);
+  $.fill();
+  
+  // Barba
+  $.fillStyle='#424242';
+  $.beginPath();
+  $.moveTo(x+18,y+12);
+  $.lineTo(x+24,y+18);
+  $.lineTo(x+30,y+12);
+  $.closePath();
+  $.fill();
+  
+  // Botas
+  $.fillStyle='#3e2723';
+  $.fillRect(x+12,y+42,8,6);
+  $.fillRect(x+28,y+42,8,6);
 }
 
 function drawP(){
   $.save();
   if(P.invuln>0&&Math.floor(P.invuln/3)%2)$.globalAlpha=0.4;
-  const pre=armorOn?'ka':'kb';
-  let spr;
-  if(P.attacking&&armorOn)spr='ka_a';
-  else if(!P.onGround&&armorOn)spr='ka_j';
-  else{
-    const fr=Math.floor(P.anim)%3;
-    spr=pre+fr;
-  }
-  const s=SC[spr];
-  if(!s){
-    $.restore();
-    return;
-  }
-  if(P.dir<0){
-    $.translate(P.x+P.w,P.y);
-    $.scale(-1,1);
-    $.drawImage(s,0,0);
+  
+  const px=P.x,py=P.y;
+  const walkOffset=P.onGround?Math.sin(P.anim)*3:0;
+  
+  // Sombra
+  const shadowGrad=$.createRadialGradient(px+8,py+28,3,px+8,py+28,10);
+  shadowGrad.addColorStop(0,'rgba(0,0,0,0.3)');
+  shadowGrad.addColorStop(1,'rgba(0,0,0,0)');
+  $.fillStyle=shadowGrad;
+  drawEllipse(px+8,py+28,10,4);
+  $.fill();
+  
+  if(armorOn){
+    // Caballero con armadura
+    
+    // Piernas
+    const legGrad=$.createLinearGradient(px+4,py+18,px+4,py+26);
+    legGrad.addColorStop(0,PAL.armor);
+    legGrad.addColorStop(1,PAL.armorDark);
+    $.fillStyle=legGrad;
+    $.fillRect(px+4,py+18+walkOffset,3,8);
+    $.fillRect(px+9,py+18-walkOffset,3,8);
+    
+    // Botas
+    $.fillStyle='#5d4037';
+    $.fillRect(px+3,py+24+walkOffset,5,4);
+    $.fillRect(px+8,py+24-walkOffset,5,4);
+    
+    // Torso
+    const torsoGrad=$.createLinearGradient(px+3,py+8,px+3,py+18);
+    torsoGrad.addColorStop(0,PAL.armorLight);
+    torsoGrad.addColorStop(1,PAL.armor);
+    $.fillStyle=torsoGrad;
+    drawRoundedRect(px+3,py+8,10,10,2);
+    $.fill();
+    
+    // Cruz roja
+    $.fillStyle='#c62828';
+    $.fillRect(px+6,py+11,4,3);
+    $.fillRect(px+7,py+10,2,5);
+    
+    // Brazos
+    const armGrad=$.createLinearGradient(px+2,py+9,px+2,py+16);
+    armGrad.addColorStop(0,PAL.armor);
+    armGrad.addColorStop(1,PAL.armorDark);
+    $.fillStyle=armGrad;
+    $.fillRect(px+1,py+9,2,6);
+    $.fillRect(px+13,py+9,2,6);
+    
+    // Casco
+    const helmetGrad=$.createLinearGradient(px+4,py,px+4,py+8);
+    helmetGrad.addColorStop(0,PAL.armorLight);
+    helmetGrad.addColorStop(1,PAL.armorDark);
+    $.fillStyle=helmetGrad;
+    drawRoundedRect(px+4,py,8,8,2);
+    $.fill();
+    
+    // Visera
+    $.fillStyle='#37474f';
+    $.fillRect(px+5,py+4,6,3);
+    
+    // Pluma
+    $.fillStyle='#c62828';
+    $.beginPath();
+    $.moveTo(px+10,py+1);
+    $.lineTo(px+14,py-4);
+    $.lineTo(px+11,py+2);
+    $.closePath();
+    $.fill();
+    
+    // Lanza si ataca
+    if(P.attacking){
+      const lanceGrad=$.createLinearGradient(px+12,py+8,px+24,py+8);
+      lanceGrad.addColorStop(0,'#8b4513');
+      lanceGrad.addColorStop(1,'#a0522d');
+      $.fillStyle=lanceGrad;
+      $.fillRect(px+12,py+8,10,2);
+      
+      const tipGrad=$.createLinearGradient(px+22,py+6,px+28,py+12);
+      tipGrad.addColorStop(0,'#e0e0e0');
+      tipGrad.addColorStop(1,'#a0a0a0');
+      $.fillStyle=tipGrad;
+      $.beginPath();
+      $.moveTo(px+22,py+7);
+      $.lineTo(px+28,py+9);
+      $.lineTo(px+22,py+11);
+      $.closePath();
+      $.fill();
+    }
   }else{
-    $.drawImage(s,P.x,P.y);
+    // Sin armadura
+    
+    // Piernas
+    $.fillStyle='#f5d5b0';
+    $.fillRect(px+4,py+18+walkOffset,3,8);
+    $.fillRect(px+9,py+18-walkOffset,3,8);
+    
+    // Pantalones
+    $.fillStyle='#5d4037';
+    $.fillRect(px+4,py+16,8,6);
+    
+    // Torso
+    const shirtGrad=$.createLinearGradient(px+4,py+8,px+4,py+16);
+    shirtGrad.addColorStop(0,'#f48fb1');
+    shirtGrad.addColorStop(1,'#f06292');
+    $.fillStyle=shirtGrad;
+    drawRoundedRect(px+4,py+8,8,8,2);
+    $.fill();
+    
+    // Cuello
+    $.fillStyle='#f5d5b0';
+    $.fillRect(px+6,py+7,4,2);
+    
+    // Cabeza
+    const headGrad=$.createLinearGradient(px+5,py,px+5,py+8);
+    headGrad.addColorStop(0,'#f5d5b0');
+    headGrad.addColorStop(1,'#e0b080');
+    $.fillStyle=headGrad;
+    drawRoundedRect(px+5,py,6,8,2);
+    $.fill();
+    
+    // Ojos
+    $.fillStyle='#000';
+    drawCircle(px+7,py+4,1);
+    drawCircle(px+9,py+4,1);
+    $.fill();
+    
+    // Cabello
+    $.fillStyle='#5d4037';
+    $.fillRect(px+5,py,6,3);
   }
+  
   $.restore();
 }
 
 function drawParts(){
   for(const p of particles){
+    const alpha=Math.min(1,p.life/10);
     $.fillStyle=p.color;
-    $.globalAlpha=Math.min(1,p.life/10);
-    $.fillRect(p.x,p.y,p.size,p.size);
+    $.globalAlpha=alpha;
+    drawCircle(p.x,p.y,p.size);
+    $.fill();
   }
   $.globalAlpha=1;
 }
 
 function drawCastle(){
   const cx=LEVEL_W-280;
-  $.fillStyle='#c0a060';
+  
+  // Base
+  const baseGrad=$.createLinearGradient(cx,GROUND_Y-90,cx,GROUND_Y);
+  baseGrad.addColorStop(0,'#d4b896');
+  baseGrad.addColorStop(1,'#a08060');
+  $.fillStyle=baseGrad;
   $.fillRect(cx,GROUND_Y-90,220,90);
-  $.fillStyle='#1a1a2e';
+  
+  // Sombra base
+  $.fillStyle='rgba(0,0,0,0.3)';
   $.fillRect(cx+4,GROUND_Y-86,212,82);
   
+  // Torres
   for(let t=0;t<3;t++){
     const tx=cx+t*90;
-    $.fillStyle='#b09050';
+    
+    const towerGrad=$.createLinearGradient(tx,GROUND_Y-120,tx,GROUND_Y);
+    towerGrad.addColorStop(0,'#c9b896');
+    towerGrad.addColorStop(1,'#9a8060');
+    $.fillStyle=towerGrad;
     $.fillRect(tx,GROUND_Y-120,40,120);
-    $.fillStyle='#c0a060';
-    $.fillRect(tx+3,GROUND_Y-115,34,110);
+    
+    // Almenas
     for(let b=0;b<4;b++){
-      $.fillStyle='#b09050';
+      $.fillStyle='#b0a080';
       $.fillRect(tx+b*10,GROUND_Y-128,8,10);
     }
-    $.fillStyle='#ffa040';
-    $.fillRect(tx+13,GROUND_Y-100,14,18);
-    $.fillStyle='#ff8020';
-    $.fillRect(tx+15,GROUND_Y-98,10,14);
-    $.fillStyle='#b09050';
-    $.fillRect(tx+19,GROUND_Y-100,2,18);
+    
+    // Ventana con luz
+    const windowGrad=$.createLinearGradient(tx+13,GROUND_Y-100,tx+13,GROUND_Y-82);
+    windowGrad.addColorStop(0,'#ffcc80');
+    windowGrad.addColorStop(1,'#ff9800');
+    $.fillStyle=windowGrad;
+    drawRoundedRect(tx+13,GROUND_Y-100,14,18,2);
+    $.fill();
+    
+    // Marco ventana
+    $.strokeStyle='#8b6914';
+    $.lineWidth=2;
+    drawRoundedRect(tx+13,GROUND_Y-100,14,18,2);
+    $.stroke();
   }
   
-  $.fillStyle='#604020';
+  // Puerta principal
+  const doorGrad=$.createLinearGradient(cx+75,GROUND_Y-55,cx+75,GROUND_Y);
+  doorGrad.addColorStop(0,'#5d4037');
+  doorGrad.addColorStop(1,'#3e2723');
+  $.fillStyle=doorGrad;
   $.fillRect(cx+75,GROUND_Y-55,70,55);
-  $.fillStyle='#402a10';
-  $.fillRect(cx+80,GROUND_Y-50,60,50);
-  $.fillStyle='#c0a060';
+  
+  // Arco puerta
+  const archGrad=$.createLinearGradient(cx+110,GROUND_Y-55,cx+110,GROUND_Y-20);
+  archGrad.addColorStop(0,'#d4b896');
+  archGrad.addColorStop(1,'#a08060');
+  $.fillStyle=archGrad;
   $.beginPath();
   $.arc(cx+110,GROUND_Y-55,35,Math.PI,0);
   $.fill();
-  $.fillStyle='#d4b880';
+  
+  $.fillStyle='#3e2723';
   $.beginPath();
   $.arc(cx+110,GROUND_Y-55,30,Math.PI,0);
   $.fill();
-  $.fillStyle=PAL.gold;
-  $.fillRect(cx+100,GROUND_Y-95,20,20);
-  $.fillStyle='#cc1111';
-  $.fillRect(cx+102,GROUND_Y-93,16,16);
-  $.fillStyle=PAL.gold;
+  
+  // Escudo
+  $.fillStyle='#ffd700';
+  drawRoundedRect(cx+100,GROUND_Y-95,20,20,2);
+  $.fill();
+  $.fillStyle='#c62828';
+  drawRoundedRect(cx+102,GROUND_Y-93,16,16,1);
+  $.fill();
+  $.fillStyle='#ffd700';
   $.fillRect(cx+107,GROUND_Y-91,6,12);
   $.fillRect(cx+104,GROUND_Y-87,12,4);
   
+  // Banderas
   const fw=Math.sin(frame*0.07)*3;
   for(let t=0;t<3;t++){
     const tx=cx+t*90+18;
-    $.fillStyle='#604020';
+    $.fillStyle='#5d4037';
     $.fillRect(tx,GROUND_Y-138,2,16);
-    $.fillStyle='#cc1111';
+    $.fillStyle='#c62828';
     $.fillRect(tx+2,GROUND_Y-138+fw,10,6);
-    $.fillStyle=PAL.gold;
+    $.fillStyle='#ffd700';
     $.fillRect(tx+4,GROUND_Y-136+fw,1,4);
-    $.fillRect(tx+3,GROUND_Y-135+fw,3,1);
   }
   
-  $.font='bold 8px Arial';
-  $.fillStyle=PAL.gold;
+  // Nombre
+  $.font='bold 9px "Segoe UI", Arial';
+  $.fillStyle='#ffd700';
   $.textAlign='center';
   $.fillText('SANTA FE',cx+110,GROUND_Y-62);
   $.textAlign='left';
 }
 
 function drawHUD(){
-  $.fillStyle='rgba(0,0,0,0.5)';
-  $.fillRect(0,0,W,22);
-  $.fillStyle='#ff3060';
-  $.font='bold 14px Arial';
-  $.fillText('♥',6,14);
-  $.fillStyle='#fff';
-  $.fillText('×'+lives,16,14);
+  // Barra superior moderna
+  const hudGrad=$.createLinearGradient(0,0,0,26);
+  hudGrad.addColorStop(0,'rgba(20,20,35,0.9)');
+  hudGrad.addColorStop(1,'rgba(10,10,20,0.8)');
+  $.fillStyle=hudGrad;
+  $.fillRect(0,0,W,26);
   
+  // Vidas
+  drawHeart(6,6,10);
+  $.font='bold 13px "Segoe UI", Arial';
+  $.fillStyle='#fff';
+  $.fillText('×'+lives,18,16);
+  
+  // Armadura
   if(armorOn){
-    $.fillStyle=PAL.armor;
+    const armorGrad=$.createLinearGradient(48,5,48,17);
+    armorGrad.addColorStop(0,PAL.armorLight);
+    armorGrad.addColorStop(1,PAL.armorDark);
+    $.fillStyle=armorGrad;
     $.fillRect(48,5,10,12);
-    $.fillStyle='#cc1111';
+    $.fillStyle='#c62828';
     $.fillRect(50,8,6,4);
   }else{
-    $.fillStyle=PAL.pink;
+    $.fillStyle='#f48fb1';
     $.fillRect(48,5,10,12);
-    $.fillStyle='#fff';
-    $.fillRect(51,7,4,1);
   }
   
-  $.fillStyle=PAL.gold;
+  // Score
+  $.fillStyle='#ffd700';
   $.textAlign='right';
-  $.fillText('SCORE '+String(score).padStart(7,'0'),W-8,14);
+  $.fillText('SCORE '+String(score).padStart(7,'0'),W-8,16);
   $.textAlign='left';
   
+  // Arma
   const weaponNames={'lance':'LANZA','axe':'HACHA','fireball':'FUEGO'};
-  const weaponColors={'lance':'#aaa','axe':'#ff6666','fireball':'#ff8800'};
-  $.fillStyle=weaponColors[playerWeapon]||'#aaa';
-  $.fillText(weaponNames[playerWeapon]||'LANZA',78,14);
+  const weaponColors={'lance':'#bbb','axe':'#ff8a80','fireball':'#ffab91'};
+  $.fillStyle=weaponColors[playerWeapon]||'#bbb';
+  $.fillText(weaponNames[playerWeapon]||'LANZA',78,16);
   
+  // Mensaje de nivel
   if(levelMessageTimer>0){
-    $.fillStyle='rgba(0,0,0,0.7)';
-    $.fillRect(0,50,W,30);
-    $.font='bold 16px Arial';
-    $.fillStyle='#ffd700';
+    const alpha=levelMessageTimer>150?1:(levelMessageTimer/150);
+    $.fillStyle=`rgba(0,0,0,${0.7*alpha})`;
+    $.fillRect(0,50,W,32);
+    
+    const msgGrad=$.createLinearGradient(0,50,0,82);
+    msgGrad.addColorStop(0,`rgba(255,215,0,${0.3*alpha})`);
+    msgGrad.addColorStop(1,`rgba(255,215,0,${0.1*alpha})`);
+    $.fillStyle=msgGrad;
+    $.fillRect(0,50,W,32);
+    
+    $.font='bold 16px "Segoe UI", Arial';
+    $.fillStyle=`rgba(255,215,0,${alpha})`;
     $.textAlign='center';
     $.fillText(currentLevelName,W/2,70);
     $.textAlign='left';
   }
   
+  // Barra de vida del jefe
   const boss=enemies&&enemies.find(e=>e.type==='boabdil'&&!e.dead&&e.active);
   if(boss){
-    $.fillStyle='rgba(0,0,0,0.6)';
-    $.fillRect(W/2-65,1,130,19);
+    $.fillStyle='rgba(0,0,0,0.7)';
+    drawRoundedRect(W/2-70,2,140,20,3);
+    $.fill();
+    
+    $.font='bold 8px "Segoe UI", Arial';
     $.fillStyle='#ddd';
-    $.font='bold 7px Arial';
     $.textAlign='center';
-    $.fillText('⚔ DRAGÓN GUARDIÁN ⚔',W/2,10);
+    $.fillText('⚔ DRAGÓN GUARDIÁN ⚔',W/2,12);
+    
     $.fillStyle='#300';
-    $.fillRect(W/2-50,13,100,5);
-    $.fillStyle='#c02020';
-    $.fillRect(W/2-50,13,100*(boss.hp/20),5);
-    $.fillStyle='#ff4040';
-    $.fillRect(W/2-50,13,100*(boss.hp/20),2);
+    $.fillRect(W/2-55,15,110,5);
+    $.fillStyle='#c62828';
+    $.fillRect(W/2-55,15,110*(boss.hp/20),5);
+    $.fillStyle='#ff5252';
+    $.fillRect(W/2-55,15,110*(boss.hp/20),2);
     $.textAlign='left';
   }
 }
@@ -1964,17 +2406,28 @@ function drawLore(){
       const a=Math.min(1,s.timer/30,Math.min(1,(280-s.timer+30)/30));
       $.save();
       $.globalAlpha=a;
-      const bw=230,bh=42,bx=(W-bw)/2,by=H-58;
-      $.fillStyle='rgba(240,240,245,0.95)';
-      $.fillRect(bx,by,bw,bh);
-      $.strokeStyle='rgba(0,80,150,0.6)';
+      
+      const bw=240,bh=48,bx=(W-bw)/2,by=H-62;
+      
+      const loreGrad=$.createLinearGradient(bx,by,bx,by+bh);
+      loreGrad.addColorStop(0,'rgba(50,50,70,0.95)');
+      loreGrad.addColorStop(1,'rgba(30,30,50,0.95)');
+      $.fillStyle=loreGrad;
+      drawRoundedRect(bx,by,bw,bh,6);
+      $.fill();
+      
+      $.strokeStyle='rgba(100,150,200,0.5)';
       $.lineWidth=1;
-      $.strokeRect(bx,by,bw,bh);
-      $.fillStyle='#d4b880';
-      $.font='12px Arial';
+      drawRoundedRect(bx,by,bw,bh,6);
+      $.stroke();
+      
+      $.font='13px "Segoe UI", Arial';
+      $.fillStyle='#e0e0e0';
       $.textAlign='center';
       const lines=s.text.split('\n');
-      for(let i=0;i<lines.length;i++)$.fillText(lines[i],W/2,by+12+i*12);
+      for(let i=0;i<lines.length;i++){
+        $.fillText(lines[i],W/2,by+16+i*14);
+      }
       $.textAlign='left';
       $.restore();
     }
@@ -1983,66 +2436,100 @@ function drawLore(){
 
 function drawMenu(){
   menuAnim++;
+  
+  // Fondo gradiente
   const g=$.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#1a1a2e');
-  g.addColorStop(0.4,'#16213e');
-  g.addColorStop(1,'#0f3460');
+  g.addColorStop(0,'#0f0c29');
+  g.addColorStop(0.4,'#302b63');
+  g.addColorStop(1,'#24243e');
   $.fillStyle=g;
   $.fillRect(0,0,W,H);
   
-  for(let i=0;i<25;i++){
-    const px=(i*47+menuAnim*0.25)%W;
-    const py=(i*31+menuAnim*0.4)%H;
-    $.fillStyle=`rgba(255,200,100,${0.05+((i*7)%10)/40})`;
-    $.fillRect(px,py,2,2);
+  // Partículas doradas
+  for(let i=0;i<30;i++){
+    const px=(i*47+menuAnim*0.2)%W;
+    const py=(i*31+menuAnim*0.35)%H;
+    const alpha=0.08+((i*7)%10)/80;
+    $.fillStyle=`rgba(255,215,0,${alpha})`;
+    drawCircle(px,py,(i%3===0)?2:1);
+    $.fill();
   }
   
-  $.fillStyle='rgba(255,200,100,0.03)';
-  $.fillRect(W/2-120,H-80,240,50);
-  for(let i=0;i<5;i++)$.fillRect(W/2-100+i*45,H-95,20,30);
+  // Castillo decorativo
+  $.fillStyle='rgba(255,215,0,0.05)';
+  $.fillRect(W/2-120,H-85,240,55);
+  for(let i=0;i<5;i++){
+    $.fillRect(W/2-100+i*45,H-100,20,35);
+  }
 
+  // Título
   $.save();
   $.textAlign='center';
-  $.font='bold 14px Arial';
-  $.fillStyle='rgba(255,215,0,0.35)';
-  $.fillText('CEIP CAPITULACIONES PRESENTA',W/2,30);
-  $.font='bold 28px Arial';
-  $.fillStyle='#8a5500';
-  $.fillText('EL CABALLERO',W/2+2,62);
-  $.fillStyle=PAL.gold;
-  $.fillText('EL CABALLERO',W/2,60);
-  $.fillStyle='#5a1111';
-  $.fillText('DE SANTA FE',W/2+2,92);
-  $.fillStyle='#ff4040';
-  $.fillText('DE SANTA FE',W/2,90);
-  $.font='bold 14px Arial';
-  $.fillStyle='#c0a060';
-  $.fillText('★ SANTA FE · GRANADA · 1491 ★',W/2,112);
-  $.font='13px Arial';
-  $.fillStyle='#7a7a9a';
-  $.fillText('Recupera los pergaminos de la paz',W/2,130);
-  $.fillText('y llega a las puertas de Santa Fe',W/2,142);
   
-  const btnY=165,hov=Math.sin(menuAnim*0.06)*2;
-  $.fillStyle='rgba(255,255,255,0.06)';
-  $.fillRect(W/2-75,btnY+hov-2,150,26);
-  $.strokeStyle='rgba(255,255,255,0.3)';
+  $.font='bold 14px "Segoe UI", Arial';
+  $.fillStyle='rgba(255,215,0,0.5)';
+  $.fillText('CEIP CAPITULACIONES PRESENTA',W/2,32);
+  
+  $.font='bold 32px "Segoe UI", Arial';
+  // Sombra
+  $.fillStyle='rgba(0,0,0,0.5)';
+  $.fillText('EL CABALLERO',W/2+2,64);
+  // Texto principal
+  const titleGrad=$.createLinearGradient(W/2-80,40,W/2+80,70);
+  titleGrad.addColorStop(0,'#ffd700');
+  titleGrad.addColorStop(0.5,'#ffeb3b');
+  titleGrad.addColorStop(1,'#ffd700');
+  $.fillStyle=titleGrad;
+  $.fillText('EL CABALLERO',W/2,62);
+  
+  $.fillStyle='rgba(0,0,0,0.5)';
+  $.fillText('DE SANTA FE',W/2+2,96);
+  const subtitleGrad=$.createLinearGradient(W/2-60,80,W/2+60,100);
+  subtitleGrad.addColorStop(0,'#ff5252');
+  subtitleGrad.addColorStop(0.5,'#ff8a80');
+  subtitleGrad.addColorStop(1,'#ff5252');
+  $.fillStyle=subtitleGrad;
+  $.fillText('DE SANTA FE',W/2,94);
+  
+  $.font='bold 14px "Segoe UI", Arial';
+  $.fillStyle='#d4b896';
+  $.fillText('★ SANTA FE · GRANADA · 1491 ★',W/2,118);
+  
+  $.font='13px "Segoe UI", Arial';
+  $.fillStyle='#aaa';
+  $.fillText('Recupera los pergaminos de la paz',W/2,138);
+  $.fillText('y llega a las puertas de Santa Fe',W/2,152);
+  
+  // Botón
+  const btnY=175,hov=Math.sin(menuAnim*0.05)*2;
+  const btnGrad=$.createLinearGradient(W/2-80,btnY+hov,W/2+80,btnY+hov+28);
+  btnGrad.addColorStop(0,'rgba(255,255,255,0.15)');
+  btnGrad.addColorStop(1,'rgba(255,255,255,0.08)');
+  $.fillStyle=btnGrad;
+  drawRoundedRect(W/2-80,btnY+hov-2,160,30,6);
+  $.fill();
+  
+  $.strokeStyle='rgba(255,255,255,0.4)';
   $.lineWidth=1;
-  $.strokeRect(W/2-75,btnY+hov-2,150,26);
-  $.fillStyle='#fff';
-  $.font='bold 14px Arial';
-  $.fillText('▶ COMENZAR',W/2,btnY+hov+15);
+  drawRoundedRect(W/2-80,btnY+hov-2,160,30,6);
+  $.stroke();
   
+  $.fillStyle='#fff';
+  $.font='bold 15px "Segoe UI", Arial';
+  $.fillText('▶ COMENZAR',W/2,btnY+hov+16);
+  
+  // Parpadeo
   if(Math.floor(menuAnim/30)%2){
-    $.fillStyle=PAL.gold;
-    $.font='13px Arial';
-    $.fillText('PULSA ENTER O TOCA PARA EMPEZAR',W/2,210);
+    $.fillStyle='#ffd700';
+    $.font='13px "Segoe UI", Arial';
+    $.fillText('PULSA ENTER O TOCA PARA EMPEZAR',W/2,215);
   }
   
-  $.font='9px Arial';
-  $.fillStyle='#444';
-  $.fillText('← → MOVERSE  |  ↑/ESPACIO SALTO  |  Z/X ATACAR',W/2,240);
-  $.fillText('Basado en Fantasmas \'n Aventura (Capcom, 1985) · Ambientado en hechos reales',W/2,252);
+  // Controles
+  $.font='10px "Segoe UI", Arial';
+  $.fillStyle='#666';
+  $.fillText('← → MOVERSE  |  ↑/ESPACIO SALTO  |  Z/X ATACAR',W/2,245);
+  $.fillText('Basado en Fantasmas \'n Aventura · Ambientado en hechos reales',W/2,258);
   $.restore();
   
   if(keys.enter||keys.fire||keys.up){
@@ -2063,61 +2550,95 @@ function drawStory(){
     state='playing';
     return;
   }
-  $.fillStyle=pg.bg;
+  
+  // Fondo
+  const bgGrad=$.createLinearGradient(0,0,0,H);
+  bgGrad.addColorStop(0,pg.bg);
+  bgGrad.addColorStop(1,'#0a0a14');
+  $.fillStyle=bgGrad;
   $.fillRect(0,0,W,H);
-  $.strokeStyle='rgba(200,160,80,0.15)';
+  
+  // Marco
+  $.strokeStyle='rgba(200,160,80,0.2)';
   $.lineWidth=2;
-  $.strokeRect(20,15,W-40,H-30);
+  drawRoundedRect(20,15,W-40,H-30,8);
+  $.stroke();
+  
   $.save();
   $.textAlign='center';
   $.globalAlpha=Math.min(1,storyTimer/40);
-  $.font='bold 24px Arial';
-  $.fillStyle=pg.color;
-  $.fillText(pg.title,W/2,65);
+  
+  $.font='bold 26px "Segoe UI", Arial';
+  const titleGrad=$.createLinearGradient(W/2-60,50,W/2+60,70);
+  titleGrad.addColorStop(0,pg.color);
+  titleGrad.addColorStop(1,'#fff');
+  $.fillStyle=titleGrad;
+  $.fillText(pg.title,W/2,68);
+  
   if(pg.subtitle){
-    $.font='bold 14px Arial';
-    $.fillStyle='#aaccff';
-    $.fillText(pg.subtitle,W/2,85);
+    $.font='bold 14px "Segoe UI", Arial';
+    $.fillStyle='#90caf9';
+    $.fillText(pg.subtitle,W/2,88);
   }
-  $.font='12px Arial';
-  $.fillStyle='#ffffff';
+  
+  $.font='13px "Segoe UI", Arial';
+  $.fillStyle='#e0e0e0';
   const lines=pg.text.split('\n');
-  for(let i=0;i<lines.length;i++)$.fillText(lines[i],W/2,115+i*18);
-  if(storyTimer>20&&Math.floor(storyTimer/20)%2){
-    $.font='12px Arial';
-    $.fillStyle='#888';
-    $.fillText('PULSA ENTER PARA CONTINUAR →',W/2,H-25);
+  for(let i=0;i<lines.length;i++){
+    $.fillText(lines[i],W/2,120+i*18);
   }
-  $.fillStyle='#555';
+  
+  if(storyTimer>20&&Math.floor(storyTimer/20)%2){
+    $.font='12px "Segoe UI", Arial';
+    $.fillStyle='#888';
+    $.fillText('PULSA ENTER PARA CONTINUAR →',W/2,H-28);
+  }
+  
+  // Indicadores de página
   for(let i=0;i<STORY.length;i++){
     $.fillStyle=i===storyPage?pg.color:'#333';
-    $.fillRect(W/2-20+i*12,H-12,8,4);
+    drawRoundedRect(W/2-24+i*14,H-16,10,6,2);
+    $.fill();
   }
+  
   $.restore();
 }
 
 function drawGO(){
-  $.fillStyle='rgba(0,0,0,0.88)';
+  $.fillStyle='rgba(0,0,0,0.92)';
   $.fillRect(0,0,W,H);
+  
   $.save();
   $.textAlign='center';
+  
   const gs=Math.sin(frame*0.1)*2;
-  $.font='bold 28px Arial';
-  $.fillStyle='#500';
+  
+  $.font='bold 32px "Segoe UI", Arial';
+  $.fillStyle='rgba(0,0,0,0.5)';
   $.fillText('GAME OVER',W/2+2,H/2+gs+2);
-  $.fillStyle='#ff2020';
+  
+  const goGrad=$.createLinearGradient(W/2-80,H/2-20,W/2+80,H/2+20);
+  goGrad.addColorStop(0,'#c62828');
+  goGrad.addColorStop(0.5,'#ef5350');
+  goGrad.addColorStop(1,'#c62828');
+  $.fillStyle=goGrad;
   $.fillText('GAME OVER',W/2,H/2+gs);
-  $.font='bold 11px Arial';
-  $.fillStyle=PAL.gold;
-  $.fillText('SCORE: '+String(score).padStart(7,'0'),W/2,H/2+28);
-  $.font='13px Arial';
+  
+  $.font='bold 12px "Segoe UI", Arial';
+  $.fillStyle='#ffd700';
+  $.fillText('SCORE: '+String(score).padStart(7,'0'),W/2,H/2+32);
+  
+  $.font='14px "Segoe UI", Arial';
   $.fillStyle='#aaa';
-  $.fillText('Granada sigue sin conquistar...',W/2,H/2+46);
+  $.fillText('Granada sigue sin conquistar...',W/2,H/2+52);
+  
   if(Math.floor(frame/25)%2){
     $.fillStyle='#777';
-    $.fillText('PULSA ENTER PARA REINTENTAR',W/2,H/2+68);
+    $.fillText('PULSA ENTER PARA REINTENTAR',W/2,H/2+76);
   }
+  
   $.restore();
+  
   if(keys.enter||keys.fire){
     state='menu';
     keys.enter=false;
@@ -2126,41 +2647,54 @@ function drawGO(){
 }
 
 function drawWin(){
-  $.fillStyle='rgba(0,0,0,0.82)';
+  $.fillStyle='rgba(0,0,0,0.88)';
   $.fillRect(0,0,W,H);
+  
   $.save();
   $.textAlign='center';
-  for(let i=0;i<10;i++){
-    const a=frame*0.02+i*0.63;
-    const r=40+Math.sin(frame*0.03+i)*20;
-    $.fillStyle=`rgba(255,215,0,${0.15+Math.sin(frame*0.05+i)*0.1})`;
-    $.beginPath();
-    $.arc(W/2+Math.cos(a)*r,H/2-20+Math.sin(a)*r*0.5,3,0,Math.PI*2);
+  
+  // Partículas de celebración
+  for(let i=0;i<12;i++){
+    const a=frame*0.02+i*0.52;
+    const r=45+Math.sin(frame*0.03+i)*15;
+    $.fillStyle=`rgba(255,215,0,${0.25+Math.sin(frame*0.04+i)*0.1})`;
+    drawCircle(W/2+Math.cos(a)*r,H/2-25+Math.sin(a)*r*0.4,4);
     $.fill();
   }
-  $.font='bold 24px Arial';
-  $.fillStyle='#8a6600';
+  
+  $.font='bold 26px "Segoe UI", Arial';
+  $.fillStyle='rgba(0,0,0,0.5)';
   $.fillText('¡VICTORIA!',W/2+2,H/2-28);
-  $.fillStyle=PAL.gold;
+  
+  const winGrad=$.createLinearGradient(W/2-60,H/2-40,W/2+60,H/2-10);
+  winGrad.addColorStop(0,'#ffd700');
+  winGrad.addColorStop(0.5,'#ffeb3b');
+  winGrad.addColorStop(1,'#ffd700');
+  $.fillStyle=winGrad;
   $.fillText('¡VICTORIA!',W/2,H/2-30);
-  $.font='13px Arial';
+  
+  $.font='14px "Segoe UI", Arial';
   $.fillStyle='#d0d0e0';
-  $.fillText('¡Has completado todos los niveles!',W/2,H/2);
-  $.fillText('Has llegado a las puertas de Santa Fe.',W/2,H/2+18);
-  $.fillText('Las Capitulaciones están a salvo.',W/2,H/2+36);
-  $.font='13px Arial';
-  $.fillStyle='#a0a0b0';
-  $.fillText('El 2 de enero de 1492, Granada se rindió.',W/2,H/2+36);
-  $.fillText('Colón firmó aquí el viaje que cambiaría el mundo.',W/2,H/2+50);
-  $.font='bold 11px Arial';
-  $.fillStyle=PAL.gold;
-  $.fillText('SCORE: '+String(score).padStart(7,'0'),W/2,H/2+72);
+  $.fillText('¡Has completado todos los niveles!',W/2,H/2+5);
+  $.fillText('Has llegado a las puertas de Santa Fe.',W/2,H/2+24);
+  $.fillText('Las Capitulaciones están a salvo.',W/2,H/2+43);
+  
+  $.fillStyle='#9090a0';
+  $.fillText('El 2 de enero de 1492, Granada se rindió.',W/2,H/2+65);
+  $.fillText('Colón firmó aquí el viaje que cambiaría el mundo.',W/2,H/2+82);
+  
+  $.font='bold 12px "Segoe UI", Arial';
+  $.fillStyle='#ffd700';
+  $.fillText('SCORE: '+String(score).padStart(7,'0'),W/2,H/2+105);
+  
   if(Math.floor(frame/25)%2){
-    $.font='13px Arial';
+    $.font='14px "Segoe UI", Arial';
     $.fillStyle='#777';
-    $.fillText('PULSA ENTER PARA JUGAR DE NUEVO',W/2,H/2+92);
+    $.fillText('PULSA ENTER PARA JUGAR DE NUEVO',W/2,H/2+128);
   }
+  
   $.restore();
+  
   if(keys.enter||keys.fire){
     state='menu';
     currentLevel=1;
@@ -2176,6 +2710,7 @@ function startGame_(){
   currentLevel=1;
   isTransitioning=false;
   levelTransitionTimer=0;
+  damageCooldown=0;
   P.x=40;
   P.y=GROUND_Y-40;
   P.vx=0;
@@ -2196,7 +2731,6 @@ function startGame_(){
   genLevel();
 }
 
-buildSprites();
 (function loop(){
   update();
   draw();
